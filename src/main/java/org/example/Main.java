@@ -45,7 +45,7 @@ public class Main {
                 String[] parts = paragraphText.split(",", 2);
                 if (parts.length == 2) {
                     String label = parts[0].trim();
-                    String value = parts[1].trim();
+                    String value = parts[1].replaceAll(",+$", "").trim();
                     dataMap.get(currentDate).put(label, value);
                     labels.add(label);
                     System.out.println("Added data - Date: " + currentDate + ", Label: " + label + ", Value: " + value);

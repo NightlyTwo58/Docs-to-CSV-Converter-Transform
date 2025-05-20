@@ -63,7 +63,7 @@
         }
 
         // Prepare data for line chart
-            const lineLabels = rows.slice(1).map(row => row[0]);
+        const lineLabels = rows.slice(1).map(row => row[0]);
         const datasets = headers.map((header, colIndex) => {
           if (colIndex === 0) return null; // Skip first column if it's a label
           return {
