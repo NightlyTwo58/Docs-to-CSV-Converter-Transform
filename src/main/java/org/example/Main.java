@@ -63,7 +63,7 @@ public class Main {
             for (Map.Entry<String, Map<String, String>> entry : dataMap.entrySet()) {
                 writer.write(entry.getKey());
                 for (String label : labels) {
-                    writer.write("," + entry.getValue().getOrDefault(label, ""));
+                    writer.write("," + entry.getValue().getOrDefault(label, "0"));
                 }
                 writer.newLine();
             }
