@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CSV Table Display</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>CSV Table and Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         table {
           border-collapse: collapse;
@@ -18,23 +19,34 @@
         th {
           background-color: #eee;
         }
+        canvas {
+          max-width: 100%;
+          margin-top: 30px;
+        }
     </style>
 </head>
 <body>
 <h1>CSV Output Table</h1>
 <table id="csvTable"></table>
 
+<h2>Line Graph of All Data</h2>
+<canvas id="lineChart"></canvas>
+
+<h2>Pie Chart of Most Recent Row</h2>
+<canvas id="pieChart"></canvas>
+
 <script>
     fetch("output.csv")
       .then(response => response.text())
       .then(data => {
         const rows = data.trim().split("\n").map(row => row.split(","));
+        const headers = rows[0];
         const table = document.getElementById("csvTable");
 
         // Create table headers
         const thead = table.createTHead();
         const headerRow = thead.insertRow();
-        rows[0].forEach(header => {
+        headers.forEach(header => {
           const th = document.createElement("th");
           th.textContent = header;
           headerRow.appendChild(th);
@@ -49,6 +61,58 @@
             td.textContent = cell;
           });
         }
+
+        // Prepare data for line chart
+        const lineLabels = rows.slice(1).map((_, i) => `Row ${i + 1}`);
+        const datasets = headers.map((header, colIndex) => {
+          if (colIndex === 0) return null; // Skip first column if it's a label
+          return {
+            label: header,
+            data: rows.slice(1).map(row => parseFloat(row[colIndex])),
+            borderColor: `hsl(${(colIndex * 360) / headers.length}, 70%, 50%)`,
+            fill: false,
+            tension: 0.3
+          };
+        }).filter(Boolean);
+
+        const lineCtx = document.getElementById("lineChart").getContext("2d");
+        new Chart(lineCtx, {
+          type: "line",
+          data: {
+            labels: lineLabels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+
+        // Prepare data for pie chart from the last row
+        const lastRow = rows[rows.length - 1];
+        const pieLabels = headers.slice(1); // skip first column if label
+        const pieData = lastRow.slice(1).map(v => parseFloat(v));
+
+        const pieCtx = document.getElementById("pieChart").getContext("2d");
+        new Chart(pieCtx, {
+          type: "pie",
+          data: {
+            labels: pieLabels,
+            datasets: [{
+              data: pieData,
+              backgroundColor: pieLabels.map((_, i) =>
+                `hsl(${(i * 360) / pieLabels.length}, 70%, 60%)`
+              )
+            }]
+          },
+          options: {
+            responsive: true
+          }
+        });
       });
 </script>
 </body>
