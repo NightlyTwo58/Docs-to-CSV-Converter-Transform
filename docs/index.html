@@ -23,32 +23,23 @@
           max-width: 100%;
           margin-top: 30px;
         }
-        #lineExplanations p {
-          font-size: 0.95em;
-          margin-top: 8px;
-        }
     </style>
 </head>
 <body>
-<h2 id="pieTitle">Pie Chart</h2>
-<canvas id="pieChart"></canvas>
+<h1>CSV Output Table</h1>
+<table id="csvTable"></table>
 
 <h2>Line Graph of All Data</h2>
 <canvas id="lineChart"></canvas>
 
-<p id="explanationIntro">
-    Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue. Much like in real life, many parties don't lean the same direction on both spectrums.
-</p>
-<div id="lineExplanations"></div>
-
-<h1>CSV Output Table</h1>
-<table id="csvTable"></table>
+<h2>Pie Chart of Most Recent Row</h2>
+<canvas id="pieChart"></canvas>
 
 <script>
     fetch("output.csv")
       .then(response => response.text())
       .then(data => {
-        const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
+        const rows = data.trim().split("\n").map(row => row.split(","));
         const headers = rows[0];
         const table = document.getElementById("csvTable");
 
@@ -71,20 +62,14 @@
           });
         }
 
-        const customColors = [
-          '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-          '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
-        ];
-
-        // Line chart data
-        const lineLabels = rows.slice(1).map(row => row[0]);
+        // Prepare data for line chart
+            const lineLabels = rows.slice(1).map(row => row[0]);
         const datasets = headers.map((header, colIndex) => {
-          if (colIndex === 0) return null;
+          if (colIndex === 0) return null; // Skip first column if it's a label
           return {
             label: header,
             data: rows.slice(1).map(row => parseFloat(row[colIndex])),
-            borderColor: customColors[(colIndex - 1) % customColors.length],
-            backgroundColor: customColors[(colIndex - 1) % customColors.length],
+            borderColor: `hsl(${(colIndex * 360) / headers.length}, 70%, 50%)`,
             fill: false,
             tension: 0.3
           };
@@ -107,48 +92,26 @@
           }
         });
 
-        // Pie chart from last row
+        // Prepare data for pie chart from the last row
         const lastRow = rows[rows.length - 1];
-        const mostRecentDate = lastRow[0];
-        document.getElementById("pieTitle").textContent =
-          `${mostRecentDate}'s Election Results`;
-
-        const pieLabels = headers.slice(1);
+        const pieLabels = headers.slice(1); // skip first column if label
         const pieData = lastRow.slice(1).map(v => parseFloat(v));
-        const pieCtx = document.getElementById("pieChart").getContext("2d");
 
+        const pieCtx = document.getElementById("pieChart").getContext("2d");
         new Chart(pieCtx, {
           type: "pie",
           data: {
             labels: pieLabels,
             datasets: [{
               data: pieData,
-              backgroundColor: customColors.slice(0, pieLabels.length)
+              backgroundColor: pieLabels.map((_, i) =>
+                `hsl(${(i * 360) / pieLabels.length}, 70%, 60%)`
+              )
             }]
           },
           options: {
             responsive: true
           }
-        });
-
-        // Explanations
-        const explanationContainer = document.getElementById("lineExplanations");
-        const explanations = {
-          "SA (Socialist Alliance)": "(Academically Far-Left, Socially Left) A historical socialist/communist party that was the inspiration for the RLP. It fell because it was too idealistic, something the RLP rectified. Led the First Academic Revolution in eighth grade.",
-          "MCP (Moderate-Centre Party)": "(Academically Left, Socially Left) The big-tent left-wing/centrist party, similar to the modern democratic party. Originally founded as a newer broad centrist alternative to the LEP back when it was a socially leftist party, now it has totally supplanted the LEP in its former role and shifted leftward socially. Main advocate for rest and other indirect measures to promote academic performance in addition to the YPP and sometimes the LEP.",
-          "LEP (Liberty-Equality Party)": "(Academically Left, Socially Right [Formerly Left]) Before the rise of the RLP, the LEP was the dominant party in early high school. The old LEP stood for liberal ideals, combined with liberal academic approaches. However, in the run-up to college, a series of debacles caused by its lax academic stance caused it to loose much popularity, with its former little sister the MCP taking much its former influence in the liberal sphere. Afterwards, the LEP has reinvented itself as a stalwartly socially conservative (right-wign) party promoting "properity", hanging on left-wing academic policies. The modern LEP enjoys electoral successes usually under conditions of demobilization after an academic semester.",
-          "MU (Musical Union)": "(Nonpartisan) As the domestic musical industry faced attacks and potential decline in high school under growing academic pressure, it felt that no party was willing to represent its interests. Thus, the MU was born as a splinter faction of the AU. The Musical Union represents the Richardian interest in piano/composing at a given time. It is nonpartisan and works with any parties willing to secure music in the budget.",
-          "AU (Academic Union)": "(Academically Center-Right, Socially Right) Originally a direct competitor to the RLP with almost the exact same platform (albeit taking even less of a social position), the AU was beset by internal infighting and faded in obscurity. As of late it has seen a resurgence in popularity as many realize the republic lacks an alternative to the dying RLP conservative hegenomy, with the AU becoming a more academically purist alternative to the RLP.",
-          "NAP (Nationalist Alliance Party)": "(Academically Far-Right, Socially Far-Right) Similar to the SA, a historical far-right party that exists during the early unstable stages of Richardian democracy that is no longer extant. Advocated sharp nationalistic academic change, ultra-conservative social ideology (something lost to later parties) and strengthening of the executive branch to effect that.",
-          "RLP (Reform Labour Party)": "(Academically Right, Socially Center-Right) The dominant party since the fall of the LEP, it has recently seen struggles for influence. The RLP was born out of popular dissatification with the policies of the SA and a desire for a more syncretist approach to economics, combining right-wing "grit" with left-wing optimism and planning. The resulting RLP swept to power in the Second Academic Revolution in the sophomore year of high school. The RLP holds light conservative social views, believing that academics is most of their platform. The RLP is the academic party; other parties are often the exception to the RLP rule.",
-          "CDoP (Crown Dominion Party)": "(Academically Right) Represents parental influence in the Richardian republic, as our constitutional structure still grants significant powers to parents as a Dominion of a broader Empire. The CDoP nominally doesn't hold "petty" positions on domestic politics, but typically acts as academically and socially conservative. Most left-wing parties hold somewhat of a disdain for the CDoP.",
-          "YPP (Youth Power Party)": "(Academically Left, Socially Left) Represents the youth and liberal academics. This party has a particularly energetic spirit, focusing on friendships, love, and "responsible" light academics as its primary platform. Particularly with new friends or partners, or academic booms that allow the pursuit of more relaxed component policies, the YPP rules. It has no problem with collaborating with the MCP, as their views and goals usually align",
-        };
-
-        datasets.forEach(ds => {
-          const p = document.createElement("p");
-          p.innerHTML = `<strong>${ds.label}:</strong> ${explanations[ds.label] || "No explanation available."}`;
-          explanationContainer.appendChild(p);
         });
       });
 </script>
