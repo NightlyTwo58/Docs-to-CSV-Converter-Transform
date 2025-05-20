@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSV Table Display</title>
+    <style>
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #aaa;
+          padding: 8px;
+          text-align: left;
+        }
+        th {
+          background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+<h1>CSV Output Table</h1>
+<table id="csvTable"></table>
+
+<script>
+    fetch("output.csv")
+      .then(response => response.text())
+      .then(data => {
+        const rows = data.trim().split("\n").map(row => row.split(","));
+        const table = document.getElementById("csvTable");
+
+        // Create table headers
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        rows[0].forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+
+        // Create table body
+        const tbody = table.createTBody();
+        for (let i = 1; i < rows.length; i++) {
+          const row = tbody.insertRow();
+          rows[i].forEach(cell => {
+            const td = row.insertCell();
+            td.textContent = cell;
+          });
+        }
+      });
+</script>
+</body>
+</html>
