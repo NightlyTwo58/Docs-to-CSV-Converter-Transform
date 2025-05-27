@@ -58,6 +58,17 @@
     <table id="csvTable"></table>
 </div>
 
+<div id="rightContainer">
+    <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+    <canvas id="pieChartRight" style="width: 200px; height: 200px;"></canvas>
+
+    <h2>Line Graph of OutputPar Data</h2>
+    <canvas id="lineChartRight"></canvas>
+
+    <h1>OutputPar Table</h1>
+    <table id="csvTableRight"></table>
+</div>
+
 <script>
     fetch("output.csv")
       .then(response => response.text())
@@ -158,8 +169,24 @@
               }
             },
             scales: {
+              x: {
+                type: 'time',
+                time: {
+                  parser: 'MM-dd-yyyy',
+                  tooltipFormat: 'MMM dd, yyyy',
+                  unit: 'day'
+                },
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
               y: {
-                beginAtZero: true
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Votes'
+                }
               }
             }
           }
@@ -207,6 +234,84 @@
           const p = document.createElement("p");
           p.innerHTML = `<strong>${ds.label}:</strong> ${explanations[ds.label] || "No description available."}`;
           explanationContainer.appendChild(p);
+        });
+      });
+    fetch("docs/outputPar.csv")
+      .then(res => res.text())
+      .then(data => {
+        const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
+        const headers = rows[0].map(h => h.trim());
+
+        // Build table
+        const table = document.getElementById("csvTableRight");
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        headers.forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        const tbody = table.createTBody();
+        for (let i = 1; i < rows.length; i++) {
+          const row = tbody.insertRow();
+          rows[i].forEach(cell => {
+            const td = row.insertCell();
+            td.textContent = cell;
+          });
+        }
+
+        // Line chart (time-scaled)
+        const lineLabels = rows.slice(1).map(row => row[0]); // Dates
+        const datasets = headers.slice(1).map((header, i) => ({
+          label: header,
+          data: rows.slice(1).map(row => ({ x: row[0], y: parseFloat(row[i + 1]) })),
+          borderColor: customColors[i % customColors.length],
+          fill: false,
+          tension: 0.3
+        }));
+
+        const ctxLine = document.getElementById("lineChartRight").getContext("2d");
+        new Chart(ctxLine, {
+          type: "line",
+          data: {
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                type: 'time',
+                time: {
+                  parser: 'yyyy-MM-dd',
+                  tooltipFormat: 'MMM dd, yyyy'
+                }
+              },
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+
+        // Pie chart for last row
+        const lastRow = rows[rows.length - 1];
+        const pieLabels = headers.slice(1);
+        const pieData = lastRow.slice(1).map(v => parseFloat(v));
+        document.getElementById("pieTitleRight").textContent =
+          `${lastRow[0]}'s OutputPar Results`;
+
+        new Chart(document.getElementById("pieChartRight").getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: pieLabels,
+            datasets: [{
+              data: pieData,
+              backgroundColor: customColors.slice(0, pieLabels.length)
+            }]
+          },
+          options: {
+            responsive: true
+          }
         });
       });
 </script>

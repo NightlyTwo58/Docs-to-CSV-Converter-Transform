@@ -9,9 +9,15 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException, GeneralSecurityException {
-        Docs service = DocsServiceUtil.getDocsService();
-        String documentId = "13Xms9TDcpzIr1L6M2uTpzg5ywM6tlVmUehgJPuMzLSE";
+        // domestic electoral parties
+        sort("13Xms9TDcpzIr1L6M2uTpzg5ywM6tlVmUehgJPuMzLSE", "docs/output.csv");
 
+        // parental influence
+        sort("1DJNfTQZuCNol0OyO6KyeQJWuHudkqCwVYkSKgVBF8Sc", "docs/outputPar.csv");
+    }
+
+    public static void sort(String documentId, String outputId) throws IOException, GeneralSecurityException {
+        Docs service = DocsServiceUtil.getDocsService();
         Document doc = service.documents().get(documentId).execute();
         java.util.List<StructuralElement> content = doc.getBody().getContent();
 
@@ -53,7 +59,7 @@ public class Main {
             }
         }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("docs/output.csv"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputId))) {
             writer.write("Date");
             for (String label : labels) {
                 writer.write("," + label);
