@@ -261,30 +261,29 @@
                 }
 
                 // Line chart data
-                const lineLabels = rows.slice(1).map(row => row[0]);
+                // Need to map data to { x: date, y: value } objects for time scale
                 const datasets = headers.map((header, colIndex) => {
-                    if (colIndex === 0) return null;
+                    if (colIndex === 0) return null; // Skip the date column
                     const color = customColors[(colIndex - 1) % customColors.length];
                     return {
                         label: header,
-                        data: rows.slice(1).map(row => parseFloat(row[colIndex])),
+                        data: rows.slice(1).map(row => ({ x: row[0], y: parseFloat(row[colIndex]) })), // <--- Changed for time scale
                         borderColor: color,
-                        backgroundColor: color + '33', // transparent fill
+                        backgroundColor: color + '33',
                         fill: 'origin',
-                        tension: 0.3, // Set to 0 for no smoothing if desired
+                        tension: 0.3,
                         borderWidth: 2
                     };
                 }).filter(Boolean);
 
                 const lineCtx = document.getElementById("lineChart").getContext("2d");
-                // Destroy previous chart instance if it exists to prevent overlap
                 if (window.electoralLineChart) {
                     window.electoralLineChart.destroy();
                 }
                 window.electoralLineChart = new Chart(lineCtx, {
                     type: "line",
                     data: {
-                        labels: lineLabels,
+                        // labels: lineLabels, // Labels are no longer needed with time scale
                         datasets: datasets
                     },
                     options: {
@@ -301,7 +300,11 @@
                         },
                         scales: {
                             x: {
-                                type: 'category', // Using category scale as it's "not time-scaled"
+                                type: 'time', // <--- Changed from 'category' to 'time'
+                                time: {
+                                    parser: 'MM/dd/yyyy', // <--- Add parser for date format
+                                    tooltipFormat: 'MMM dd,PPPP' // <--- Add tooltip format
+                                },
                                 title: {
                                     display: true,
                                     text: 'Date'
@@ -328,7 +331,6 @@
                 const pieData = lastRow.slice(1).map(v => parseFloat(v));
                 const pieCtx = document.getElementById("pieChart").getContext("2d");
 
-                // Destroy previous chart instance
                 if (window.electoralPieChart) {
                     window.electoralPieChart.destroy();
                 }
@@ -348,7 +350,7 @@
 
                 // Explanations
                 const explanationContainer = document.getElementById("lineExplanations");
-                explanationContainer.innerHTML = ''; // Clear previous explanations
+                explanationContainer.innerHTML = '';
                 const explanations = {
                     "SA": "(Socialist Alliance) (Academically Far-Left, Socially Left) A historical socialist/communist party that was the inspiration for the RLP. It fell because it was too idealistic, something the RLP rectified. Led the First Academic Revolution in eighth grade.",
                     "MCP": "(Moderate-Centre Party) (Academically Left, Socially Left) The big-tent left-wing/centrist party, similar to the modern democratic party. Originally founded as a newer broad centrist alternative to the LEP back when it was a socially leftist party, now it has totally supplanted the LEP in its former role and shifted leftward socially. Main advocate for rest and other indirect measures to promote academic performance in addition to the YPP and sometimes the LEP.",
@@ -379,7 +381,6 @@
 
                 // Build table
                 const table = document.getElementById("csvTableRight");
-                // Clear previous content
                 table.innerHTML = '';
                 const thead = table.createTHead();
                 const headerRow = thead.insertRow();
@@ -390,7 +391,7 @@
                 });
                 const tbody = table.createTBody();
                 for (let i = 1; i < rows.length; i++) {
-                    const row = tbody.insertCell();
+                    const row = tbody.insertRow();
                     rows[i].forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
@@ -408,7 +409,6 @@
                 }));
 
                 const ctxLine = document.getElementById("lineChartRight").getContext("2d");
-                // Destroy previous chart instance
                 if (window.independenceLineChart) {
                     window.independenceLineChart.destroy();
                 }
@@ -441,7 +441,6 @@
                 document.getElementById("pieTitleRight").textContent =
                     `${lastRow[0]}'s OutputPar Results`;
 
-                // Destroy previous chart instance
                 if (window.independencePieChart) {
                     window.independencePieChart.destroy();
                 }
@@ -461,34 +460,33 @@
             });
     }
 
-    // --- NEW JAVASCRIPT FOR BUTTON LOGIC ---
     const selectionScreen = document.getElementById('selectionScreen');
     const mainHeader = document.getElementById('mainHeader');
-    const contentWrapper = document.getElementById('contentWrapper'); // Get the new wrapper
+    const contentWrapper = document.getElementById('contentWrapper');
     const viewBothBtn = document.getElementById('viewBoth');
     const viewElectoralBtn = document.getElementById('viewElectoral');
     const viewIndependenceBtn = document.getElementById('viewIndependence');
     const backToSelectionBtn = document.getElementById('backToSelection');
     const body = document.body;
 
-    // Function to hide all main content and show selection screen
     function showSelectionScreen() {
         selectionScreen.style.display = 'flex';
-        mainHeader.style.display = 'none'; // Hide the header
+        mainHeader.style.display = 'none';
         body.classList.remove('show-both', 'show-electoral', 'show-independence');
-        // Clear content when going back to prevent old data flicker
         document.getElementById('leftContainer').innerHTML = '';
         document.getElementById('rightContainer').innerHTML = '';
-    }
 
-    // --- Event Listeners for buttons ---
+        if (window.electoralLineChart) { window.electoralLineChart.destroy(); window.electoralLineChart = null; }
+        if (window.electoralPieChart) { window.electoralPieChart.destroy(); window.electoralPieChart = null; }
+        if (window.independenceLineChart) { window.independenceLineChart.destroy(); window.independenceLineChart = null; }
+        if (window.independencePieChart) { window.independencePieChart.destroy(); window.independencePieChart = null; }
+    }
 
     viewBothBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-electoral', 'show-independence');
         body.classList.add('show-both');
-        // Re-populate containers for fetching
         document.getElementById('leftContainer').innerHTML = `
             <h2 id="pieTitle">Pie Chart</h2>
             <canvas id="pieChart"></canvas>
@@ -514,10 +512,9 @@
 
     viewElectoralBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-both', 'show-independence');
         body.classList.add('show-electoral');
-        // Re-populate only left container
         document.getElementById('leftContainer').innerHTML = `
             <h2 id="pieTitle">Pie Chart</h2>
             <canvas id="pieChart"></canvas>
@@ -529,17 +526,16 @@
             <h1>CSV Output Table</h1>
             <table id="csvTable"></table>
         `;
-        document.getElementById('rightContainer').innerHTML = ''; // Ensure right is empty
+        document.getElementById('rightContainer').innerHTML = '';
         fetchElectoralData();
     });
 
     viewIndependenceBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-both', 'show-electoral');
         body.classList.add('show-independence');
-        // Re-populate only right container
-        document.getElementById('leftContainer').innerHTML = ''; // Ensure left is empty
+        document.getElementById('leftContainer').innerHTML = '';
         document.getElementById('rightContainer').innerHTML = `
             <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
             <canvas id="pieChartRight"></canvas>
@@ -551,10 +547,8 @@
         fetchIndependenceData();
     });
 
-    // Event listener for the new "Back to Selection" button
     backToSelectionBtn.addEventListener('click', showSelectionScreen);
 
-    // Initial state: show selection screen
     showSelectionScreen();
 
 </script>
