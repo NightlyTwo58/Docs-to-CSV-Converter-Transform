@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>CSV Table and Charts</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <style>
         body {
           display: flex;
@@ -172,7 +173,7 @@
               x: {
                 type: 'time',
                 time: {
-                  parser: 'MM-dd-yyyy',
+                  parser: 'MM/dd/yyyy',
                   tooltipFormat: 'MMM dd, yyyy',
                   unit: 'day'
                 },
@@ -282,7 +283,7 @@
               x: {
                 type: 'time',
                 time: {
-                  parser: 'yyyy-MM-dd',
+                  parser: 'MM/dd/yyyy',
                   tooltipFormat: 'MMM dd, yyyy'
                 }
               },
