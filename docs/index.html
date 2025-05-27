@@ -322,7 +322,7 @@
 
     // Independence Data Fetch Function
     function fetchIndependenceData() {
-        fetch("docs/outputPar.csv")
+        fetch("outputPar.csv")
             .then(res => res.text())
             .then(data => {
                 const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
