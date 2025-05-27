@@ -9,12 +9,45 @@
     <style>
         body {
           display: flex;
-          flex-direction: row;
+          flex-direction: column; /* Changed to column to accommodate the header */
           font-family: sans-serif;
-          justify-content: center; /* Center content horizontally */
-          align-items: flex-start; /* Align content to the top */
-          min-height: 100vh; /* Ensure body takes full viewport height */
-          margin: 0; /* Remove default body margin */
+          justify-content: flex-start; /* Align content to the top */
+          align-items: center; /* Center horizontally if using column */
+          min-height: 100vh;
+          margin: 0;
+          padding-top: 60px; /* Add padding for the fixed header */
+        }
+
+        /* Styles for the new fixed header */
+        #mainHeader {
+            width: 100%;
+            height: 50px;
+            background-color: #f8f9fa; /* Light grey background */
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            position: fixed; /* Make it stick to the top */
+            top: 0;
+            left: 0;
+            z-index: 999; /* Below selection screen, above content */
+            display: none; /* Hidden by default, shown when content is active */
+        }
+
+        #mainHeader button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            cursor: pointer;
+            background-color: #6c757d; /* Muted button color */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        #mainHeader button:hover {
+            background-color: #5a6268;
         }
 
         /* Styles for the selection screen */
@@ -55,26 +88,65 @@
         /* Default hidden state for the content containers */
         #leftContainer, #rightContainer {
             display: none; /* Initially hidden */
-            width: 50%;
-            padding: 0 20px; /* Adjust if you prefer different spacing */
+            /* Removed width: 50%; here, will be applied by JS/class */
+            padding: 0 20px;
             box-sizing: border-box;
+            flex-grow: 1; /* Allow content to grow if body is column */
+        }
+
+        /* Container for flexible row layout when content is shown */
+        #contentWrapper {
+            display: flex; /* Default to row layout for side-by-side */
+            width: 100%; /* Take full width below header */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens if needed */
         }
 
         /* Styles for when content is visible */
+        .show-both #mainHeader {
+            display: flex; /* Show header */
+        }
+        .show-both #contentWrapper {
+            flex-direction: row; /* Ensure side-by-side */
+        }
         .show-both #leftContainer,
         .show-both #rightContainer {
             display: block; /* Show both */
+            width: 50%; /* Each takes half width */
         }
 
+        .show-electoral #mainHeader {
+            display: flex; /* Show header */
+        }
+        .show-electoral #contentWrapper {
+            flex-direction: row; /* Still keep flex direction as row for potential future expansion */
+            justify-content: center; /* Center the single container */
+        }
         .show-electoral #leftContainer {
             display: block; /* Show only electoral */
-            width: 100%; /* Make it full width */
+            width: 80%; /* Make it wider, or 100% if preferred */
+            max-width: 900px; /* Optional: limit max width for readability */
+        }
+        .show-electoral #rightContainer {
+            display: none; /* Explicitly hide right */
         }
 
+
+        .show-independence #mainHeader {
+            display: flex; /* Show header */
+        }
+        .show-independence #contentWrapper {
+            flex-direction: row;
+            justify-content: center;
+        }
         .show-independence #rightContainer {
             display: block; /* Show only independence */
-            width: 100%; /* Make it full width */
+            width: 80%; /* Make it wider, or 100% if preferred */
+            max-width: 900px; /* Optional: limit max width for readability */
         }
+        .show-independence #leftContainer {
+            display: none; /* Explicitly hide left */
+        }
+
 
         /* Existing styles below (with potential refinements) */
         table {
@@ -103,6 +175,10 @@
 </head>
 <body>
 
+<div id="mainHeader">
+    <button id="backToSelection">Back to Selection</button>
+</div>
+
 <div id="selectionScreen">
     <h1>Select Data View</h1>
     <button id="viewBoth">View Both Data Sets</button>
@@ -110,34 +186,36 @@
     <button id="viewIndependence">View Only Independence Data</button>
 </div>
 
-<div id="leftContainer">
-    <h2 id="pieTitle">Pie Chart</h2>
-    <canvas id="pieChart"></canvas>
+<div id="contentWrapper">
+    <div id="leftContainer">
+        <h2 id="pieTitle">Pie Chart</h2>
+        <canvas id="pieChart"></canvas>
 
-    <h2>Line Graph of All Data</h2>
-    <p id="scaling_warn">
-        Note data is not time-scaled.
-    </p>
-    <canvas id="lineChart"></canvas>
+        <h2>Line Graph of All Data</h2>
+        <p id="scaling_warn">
+            Note data is not time-scaled.
+        </p>
+        <canvas id="lineChart"></canvas>
 
-    <p id="explanationIntro">
-        Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.
-    </p>
-    <div id="lineExplanations"></div>
+        <p id="explanationIntro">
+            Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.
+        </p>
+        <div id="lineExplanations"></div>
 
-    <h1>CSV Output Table</h1>
-    <table id="csvTable"></table>
-</div>
+        <h1>CSV Output Table</h1>
+        <table id="csvTable"></table>
+    </div>
 
-<div id="rightContainer">
-    <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
-    <canvas id="pieChartRight"></canvas>
+    <div id="rightContainer">
+        <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+        <canvas id="pieChartRight"></canvas>
 
-    <h2>Line Graph of OutputPar Data</h2>
-    <canvas id="lineChartRight"></canvas>
+        <h2>Line Graph of OutputPar Data</h2>
+        <canvas id="lineChartRight"></canvas>
 
-    <h1>OutputPar Table</h1>
-    <table id="csvTableRight"></table>
+        <h1>OutputPar Table</h1>
+        <table id="csvTableRight"></table>
+    </div>
 </div>
 
 <script>
@@ -147,38 +225,9 @@
     ];
 </script>
 
-<script id="electoralScript">
-    // Your existing electoral data (output.csv) script content goes here
-    // IMPORTANT: Make sure this script only runs when electoral data is needed
-    // We will modify how this script is loaded/executed in JS
-</script>
-
-<script id="independenceScript">
-    // Your existing independence data (docs/outputPar.csv) script content goes here
-    // IMPORTANT: Make sure this script only runs when independence data is needed
-    // We will modify how this script is loaded/executed in JS
-</script>
-
 <script>
-    // NEW JAVASCRIPT FOR BUTTON LOGIC
-    const selectionScreen = document.getElementById('selectionScreen');
-    const viewBothBtn = document.getElementById('viewBoth');
-    const viewElectoralBtn = document.getElementById('viewElectoral');
-    const viewIndependenceBtn = document.getElementById('viewIndependence');
-    const body = document.body; // Reference to the body element for class manipulation
-
-    // Function to load and execute a script's content
-    function loadScriptContent(scriptId, fetchFunction) {
-        const scriptElement = document.getElementById(scriptId);
-        if (scriptElement) {
-            // Remove existing content to prevent re-execution if already loaded
-            scriptElement.innerHTML = '';
-            // Call the original fetch function directly
-            fetchFunction();
-        }
-    }
-
-    // --- Define your fetch functions here, wrapping your existing script content ---
+    // Define all fetch functions and their associated chart destruction logic
+    // This makes sure they are available when called by the view selection buttons
 
     // Electoral Data Fetch Function
     function fetchElectoralData() {
@@ -241,7 +290,7 @@
                     options: {
                         responsive: true,
                         interaction: {
-                            mode: 'index', // Changed from 'nearest' for general multi-dataset tooltip
+                            mode: 'index',
                             intersect: false
                         },
                         plugins: {
@@ -255,7 +304,7 @@
                                 type: 'category', // Using category scale as it's "not time-scaled"
                                 title: {
                                     display: true,
-                                    text: 'Date' // Label remains 'Date'
+                                    text: 'Date'
                                 }
                             },
                             y: {
@@ -341,7 +390,7 @@
                 });
                 const tbody = table.createTBody();
                 for (let i = 1; i < rows.length; i++) {
-                    const row = tbody.insertRow();
+                    const row = tbody.insertCell();
                     rows[i].forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
@@ -355,7 +404,7 @@
                     data: rows.slice(1).map(row => ({ x: row[0], y: parseFloat(row[i + 1]) })),
                     borderColor: customColors[i % customColors.length],
                     fill: false,
-                    tension: 0.3 // Set to 0 for no smoothing if desired
+                    tension: 0.3
                 }));
 
                 const ctxLine = document.getElementById("lineChartRight").getContext("2d");
@@ -375,7 +424,7 @@
                                 type: 'time',
                                 time: {
                                     parser: 'MM/dd/yyyy',
-                                    tooltipFormat: 'MMM dd,PPPP' // Consistent with common full date format
+                                    tooltipFormat: 'MMM dd,PPPP'
                                 }
                             },
                             y: {
@@ -412,29 +461,101 @@
             });
     }
 
+    // --- NEW JAVASCRIPT FOR BUTTON LOGIC ---
+    const selectionScreen = document.getElementById('selectionScreen');
+    const mainHeader = document.getElementById('mainHeader');
+    const contentWrapper = document.getElementById('contentWrapper'); // Get the new wrapper
+    const viewBothBtn = document.getElementById('viewBoth');
+    const viewElectoralBtn = document.getElementById('viewElectoral');
+    const viewIndependenceBtn = document.getElementById('viewIndependence');
+    const backToSelectionBtn = document.getElementById('backToSelection');
+    const body = document.body;
+
+    // Function to hide all main content and show selection screen
+    function showSelectionScreen() {
+        selectionScreen.style.display = 'flex';
+        mainHeader.style.display = 'none'; // Hide the header
+        body.classList.remove('show-both', 'show-electoral', 'show-independence');
+        // Clear content when going back to prevent old data flicker
+        document.getElementById('leftContainer').innerHTML = '';
+        document.getElementById('rightContainer').innerHTML = '';
+    }
+
     // --- Event Listeners for buttons ---
 
     viewBothBtn.addEventListener('click', () => {
-        selectionScreen.style.display = 'none'; // Hide the selection screen
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex'; // Show the header
         body.classList.remove('show-electoral', 'show-independence');
-        body.classList.add('show-both'); // Add class to body to show both containers
-        fetchElectoralData(); // Load electoral data
-        fetchIndependenceData(); // Load independence data
+        body.classList.add('show-both');
+        // Re-populate containers for fetching
+        document.getElementById('leftContainer').innerHTML = `
+            <h2 id="pieTitle">Pie Chart</h2>
+            <canvas id="pieChart"></canvas>
+            <h2>Line Graph of All Data</h2>
+            <p id="scaling_warn">Note data is not time-scaled.</p>
+            <canvas id="lineChart"></canvas>
+            <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
+            <div id="lineExplanations"></div>
+            <h1>CSV Output Table</h1>
+            <table id="csvTable"></table>
+        `;
+        document.getElementById('rightContainer').innerHTML = `
+            <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+            <canvas id="pieChartRight"></canvas>
+            <h2>Line Graph of OutputPar Data</h2>
+            <canvas id="lineChartRight"></canvas>
+            <h1>OutputPar Table</h1>
+            <table id="csvTableRight"></table>
+        `;
+        fetchElectoralData();
+        fetchIndependenceData();
     });
 
     viewElectoralBtn.addEventListener('click', () => {
-        selectionScreen.style.display = 'none'; // Hide the selection screen
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex'; // Show the header
         body.classList.remove('show-both', 'show-independence');
-        body.classList.add('show-electoral'); // Add class to body to show only electoral
-        fetchElectoralData(); // Load electoral data
+        body.classList.add('show-electoral');
+        // Re-populate only left container
+        document.getElementById('leftContainer').innerHTML = `
+            <h2 id="pieTitle">Pie Chart</h2>
+            <canvas id="pieChart"></canvas>
+            <h2>Line Graph of All Data</h2>
+            <p id="scaling_warn">Note data is not time-scaled.</p>
+            <canvas id="lineChart"></canvas>
+            <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
+            <div id="lineExplanations"></div>
+            <h1>CSV Output Table</h1>
+            <table id="csvTable"></table>
+        `;
+        document.getElementById('rightContainer').innerHTML = ''; // Ensure right is empty
+        fetchElectoralData();
     });
 
     viewIndependenceBtn.addEventListener('click', () => {
-        selectionScreen.style.display = 'none'; // Hide the selection screen
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex'; // Show the header
         body.classList.remove('show-both', 'show-electoral');
-        body.classList.add('show-independence'); // Add class to body to show only independence
-        fetchIndependenceData(); // Load independence data
+        body.classList.add('show-independence');
+        // Re-populate only right container
+        document.getElementById('leftContainer').innerHTML = ''; // Ensure left is empty
+        document.getElementById('rightContainer').innerHTML = `
+            <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+            <canvas id="pieChartRight"></canvas>
+            <h2>Line Graph of OutputPar Data</h2>
+            <canvas id="lineChartRight"></canvas>
+            <h1>OutputPar Table</h1>
+            <table id="csvTableRight"></table>
+        `;
+        fetchIndependenceData();
     });
+
+    // Event listener for the new "Back to Selection" button
+    backToSelectionBtn.addEventListener('click', showSelectionScreen);
+
+    // Initial state: show selection screen
+    showSelectionScreen();
 
 </script>
 </body>
