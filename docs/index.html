@@ -439,7 +439,7 @@
                 const pieLabels = headers.slice(1);
                 const pieData = lastRow.slice(1).map(v => parseFloat(v));
                 document.getElementById("pieTitleRight").textContent =
-                    `${lastRow[0]}'s OutputPar Results`;
+                    `${lastRow[0]}'s Independence Levels`;
 
                 // Destroy previous chart instance
                 if (window.independencePieChart) {
@@ -511,7 +511,7 @@
             <canvas id="pieChartRight"></canvas>
             <h2>Line Graph of OutputPar Data</h2>
             <canvas id="lineChartRight"></canvas>
-            <h1>OutputPar Table</h1>
+            <h1>Independence Level Table</h1>
             <table id="csvTableRight"></table>
         `;
         fetchElectoralData();
