@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -10,8 +10,9 @@
         body {
           display: flex;
           flex-direction: row;
+          font-family: sans-serif;
         }
-        #leftContainer {
+        #leftContainer, #rightContainer {
           width: 50%;
           padding-right: 20px;
           box-sizing: border-box;
@@ -32,6 +33,7 @@
         canvas {
           max-width: 100%;
           margin-top: 30px;
+          height: auto;
         }
         #lineExplanations p {
           font-size: 0.95em;
@@ -42,11 +44,11 @@
 <body>
 <div id="leftContainer">
     <h2 id="pieTitle">Pie Chart</h2>
-    <canvas id="pieChart" style="width: 200px; height: 200px;"></canvas>
+    <canvas id="pieChart"></canvas>
 
     <h2>Line Graph of All Data</h2>
     <p id="scaling_warn">
-        Note data is not time-scaled.
+        Data below.
     </p>
     <canvas id="lineChart"></canvas>
 
@@ -61,7 +63,7 @@
 
 <div id="rightContainer">
     <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
-    <canvas id="pieChartRight" style="width: 200px; height: 200px;"></canvas>
+    <canvas id="pieChartRight"></canvas>
 
     <h2>Line Graph of OutputPar Data</h2>
     <canvas id="lineChartRight"></canvas>
@@ -69,6 +71,13 @@
     <h1>OutputPar Table</h1>
     <table id="csvTableRight"></table>
 </div>
+
+<script>
+    const customColors = [
+        '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+        '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
+    ];
+</script>
 
 <script>
     fetch("output.csv")
@@ -96,11 +105,6 @@
             td.textContent = cell;
           });
         }
-
-        const customColors = [
-          '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-          '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
-        ];
 
         // Line chart data
         const lineLabels = rows.slice(1).map(row => row[0]);
@@ -237,6 +241,9 @@
           explanationContainer.appendChild(p);
         });
       });
+</script>
+
+<script>
     fetch("docs/outputPar.csv")
       .then(res => res.text())
       .then(data => {
@@ -316,5 +323,7 @@
         });
       });
 </script>
+
+
 </body>
 </html>
