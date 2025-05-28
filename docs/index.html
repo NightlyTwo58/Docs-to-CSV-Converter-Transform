@@ -171,6 +171,27 @@
           font-size: 0.95em;
           margin-top: 8px;
         }
+
+        /* Styles for the new date range controls */
+        #dateRangeControls {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        #dateRangeControls label,
+        #dateRangeControls span {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        #dateRangeControls input[type="range"] {
+            width: 80%;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -223,25 +244,94 @@
         '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
         '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
     ];
-</script>
 
-<script>
-    // Define all fetch functions and their associated chart destruction logic
-    // This makes sure they are available when called by the view selection buttons
+    // Global chart instances to manage their destruction
+    let electoralPieChart = null;
+    let electoralLineChart = null;
+    let independencePieChart = null;
+    let independenceLineChart = null;
+
+    // Global variables to store the raw parsed data and slider related info for electoral data
+    let allElectoralDataRows = []; // Stores all parsed rows from output.csv (date objects and values)
+    let electoralMinDateMs = 0;
+    let electoralMaxDateMs = 0;
+
+    // Helper to destroy all chart instances
+    function destroyAllCharts() {
+        if (electoralPieChart) { electoralPieChart.destroy(); electoralPieChart = null; }
+        if (electoralLineChart) { electoralLineChart.destroy(); electoralLineChart = null; }
+        if (independencePieChart) { independencePieChart.destroy(); independencePieChart = null; }
+        if (independenceLineChart) { independenceLineChart.destroy(); independenceLineChart = null; }
+    }
 
     // Electoral Data Fetch Function
     function fetchElectoralData() {
-        fetch("output.csv?_=${new Date().getTime()}")
+        fetch(`output.csv?_=${new Date().getTime()}`) // Cache-busting
             .then(response => response.text())
             .then(data => {
-                const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
-                const headers = rows[0].map(header => header.trim());
+                const rawRows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
+                const headers = rawRows[0].map(header => header.trim());
+
+                // Parse data for line chart and store globally
+                allElectoralDataRows = rawRows.slice(1).map(row => {
+                    const date = new Date(row[0]); // Parse date (e.g., MM/dd/yyyy)
+                    // Ensure date is valid; if not, handle error or skip row
+                    if (isNaN(date.getTime())) {
+                        console.warn(`Invalid date encountered in output.csv: ${row[0]}. Skipping this row for time-based chart.`);
+                        return null;
+                    }
+                    const values = row.slice(1).map(parseFloat); // Convert string values to numbers
+                    return { date, values };
+                }).filter(Boolean); // Remove any null entries from invalid dates
+
+                if (allElectoralDataRows.length === 0) {
+                    console.error("No valid electoral data rows with parsable dates to display.");
+                    // Hide slider if no valid data
+                    document.getElementById('dateRangeControls').style.display = 'none';
+                    return;
+                }
+
+                // Sort data by date just in case, though CSV should ideally be sorted
+                allElectoralDataRows.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+                // Determine min and max dates for the slider
+                electoralMinDateMs = allElectoralDataRows[0].date.getTime();
+                electoralMaxDateMs = allElectoralDataRows[allElectoralDataRows.length - 1].date.getTime();
+
+                // Set up sliders
+                const startDateSlider = document.getElementById('startDateSlider');
+                const endDateSlider = document.getElementById('endDateSlider');
+                const displayStartDate = document.getElementById('displayStartDate');
+                const displayEndDate = document.getElementById('displayEndDate');
+
+                if (startDateSlider && endDateSlider) { // Ensure elements exist
+                    startDateSlider.min = electoralMinDateMs;
+                    startDateSlider.max = electoralMaxDateMs;
+                    startDateSlider.value = electoralMinDateMs; // Default to full range
+                    startDateSlider.step = 86400000; // 1 day in milliseconds (24*60*60*1000)
+
+                    endDateSlider.min = electoralMinDateMs;
+                    endDateSlider.max = electoralMaxDateMs;
+                    endDateSlider.value = electoralMaxDateMs; // Default to full range
+                    endDateSlider.step = 86400000; // 1 day in milliseconds
+
+                    // Initial display of dates
+                    displayStartDate.textContent = new Date(electoralMinDateMs).toLocaleDateString();
+                    displayEndDate.textContent = new Date(electoralMaxDateMs).toLocaleDateString();
+
+                    // Add event listeners only once. If they were already added, oninput will overwrite.
+                    startDateSlider.oninput = updateElectoralChartRange;
+                    endDateSlider.oninput = updateElectoralChartRange;
+                } else {
+                    console.error("Date range slider elements not found.");
+                }
+
+                // Show date range controls if valid data
+                document.getElementById('dateRangeControls').style.display = 'block';
+
+                // --- Table rendering (using rawRows to include headers) ---
                 const table = document.getElementById("csvTable");
-
-                // Clear previous content in case of re-render
                 table.innerHTML = '';
-
-                // Create table headers
                 const thead = table.createTHead();
                 const headerRow = thead.insertRow();
                 headers.forEach(header => {
@@ -249,90 +339,29 @@
                     th.textContent = header;
                     headerRow.appendChild(th);
                 });
-
-                // Create table body
                 const tbody = table.createTBody();
-                for (let i = 1; i < rows.length; i++) {
+                for (let i = 1; i < rawRows.length; i++) {
                     const row = tbody.insertRow();
-                    rows[i].forEach(cell => {
+                    rawRows[i].forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
                     });
                 }
 
-                // Line chart data
-                const lineLabels = rows.slice(1).map(row => row[0]);
-                const datasets = headers.map((header, colIndex) => {
-                    if (colIndex === 0) return null;
-                    const color = customColors[(colIndex - 1) % customColors.length];
-                    return {
-                        label: header,
-                        data: rows.slice(1).map(row => parseFloat(row[colIndex])),
-                        borderColor: color,
-                        backgroundColor: color + '33', // transparent fill
-                        fill: 'origin',
-                        tension: 0.3, // Set to 0 for no smoothing if desired
-                        borderWidth: 2
-                    };
-                }).filter(Boolean);
-
-                const lineCtx = document.getElementById("lineChart").getContext("2d");
-                // Destroy previous chart instance if it exists to prevent overlap
-                if (window.electoralLineChart) {
-                    window.electoralLineChart.destroy();
-                }
-                window.electoralLineChart = new Chart(lineCtx, {
-                    type: "line",
-                    data: {
-                        labels: lineLabels,
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            },
-                        },
-                        scales: {
-                            x: {
-                                type: 'category', // Using category scale as it's "not time-scaled"
-                                title: {
-                                    display: true,
-                                    text: 'Date'
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Votes'
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Pie chart from last row
-                const lastRow = rows[rows.length - 1];
-                const mostRecentDate = lastRow[0];
+                // --- Pie chart from last row of raw data ---
+                const lastRowRaw = rawRows[rawRows.length - 1];
+                const mostRecentDate = lastRowRaw[0];
                 document.getElementById("pieTitle").textContent =
                     `${mostRecentDate}'s Election Results`;
 
                 const pieLabels = headers.slice(1);
-                const pieData = lastRow.slice(1).map(v => parseFloat(v));
+                const pieData = lastRowRaw.slice(1).map(v => parseFloat(v));
                 const pieCtx = document.getElementById("pieChart").getContext("2d");
 
-                // Destroy previous chart instance
-                if (window.electoralPieChart) {
-                    window.electoralPieChart.destroy();
+                if (electoralPieChart) {
+                    electoralPieChart.destroy();
                 }
-                window.electoralPieChart = new Chart(pieCtx, {
+                electoralPieChart = new Chart(pieCtx, {
                     type: "pie",
                     data: {
                         labels: pieLabels,
@@ -346,9 +375,12 @@
                     }
                 });
 
-                // Explanations
+                // Initial drawing of the line chart with the full range
+                updateElectoralChartRange();
+
+                // --- Explanations (unchanged) ---
                 const explanationContainer = document.getElementById("lineExplanations");
-                explanationContainer.innerHTML = ''; // Clear previous explanations
+                explanationContainer.innerHTML = '';
                 const explanations = {
                     "SA": "(Socialist Alliance) (Academically Far-Left, Socially Left) A historical socialist/communist party that was the inspiration for the RLP. It fell because it was too idealistic, something the RLP rectified. Led the First Academic Revolution in eighth grade.",
                     "MCP": "(Moderate-Centre Party) (Academically Left, Socially Left) The big-tent left-wing/centrist party, similar to the modern democratic party. Originally founded as a newer broad centrist alternative to the LEP back when it was a socially leftist party, now it has totally supplanted the LEP in its former role and shifted leftward socially. Main advocate for rest and other indirect measures to promote academic performance in addition to the YPP and sometimes the LEP.",
@@ -361,17 +393,133 @@
                     "YPP": "(Youth Power Party) (Academically Left, Socially Left) Represents the youth and liberal academics. This party has a particularly energetic spirit, focusing on friendships, love, and \"responsible\" light academics as its primary platform. Particularly with new friends or partners, or academic booms that allow the pursuit of more relaxed component policies, the YPP rules. It has no problem with collaborating with the MCP, as their views and goals usually align.",
                 };
 
-                datasets.forEach(ds => {
+                headers.slice(1).forEach(label => { // Using headers.slice(1) to get labels
                     const p = document.createElement("p");
-                    p.innerHTML = `<strong>${ds.label}:</strong> ${explanations[ds.label] || "No description available."}`;
+                    p.innerHTML = `<strong>${label}:</strong> ${explanations[label] || "No description available."}`;
                     explanationContainer.appendChild(p);
                 });
-            });
+            })
+            .catch(error => console.error("Error fetching electoral data:", error));
     }
 
-    // Independence Data Fetch Function
+
+    function updateElectoralChartRange() {
+        const startDateSlider = document.getElementById('startDateSlider');
+        const endDateSlider = document.getElementById('endDateSlider');
+        const displayStartDate = document.getElementById('displayStartDate');
+        const displayEndDate = document.getElementById('displayEndDate');
+        const lineCtx = document.getElementById("lineChart").getContext("2d");
+
+        // Ensure sliders are present and data is loaded
+        if (!startDateSlider || !endDateSlider || allElectoralDataRows.length === 0) {
+            return;
+        }
+
+        let selectedMinDateMs = parseInt(startDateSlider.value);
+        let selectedMaxDateMs = parseInt(endDateSlider.value);
+
+        // Ensure start date is not after end date; adjust if needed for UX
+        if (selectedMinDateMs > selectedMaxDateMs) {
+            // Option: set end date to start date or vice versa for a single point
+            // For now, Chart.js will just draw an empty range.
+            // A more robust UI would prevent this or automatically adjust.
+        }
+
+        displayStartDate.textContent = new Date(selectedMinDateMs).toLocaleDateString();
+        displayEndDate.textContent = new Date(selectedMaxDateMs).toLocaleDateString();
+
+        const filteredRows = allElectoralDataRows.filter(row => {
+            const rowTime = row.date.getTime();
+            return rowTime >= selectedMinDateMs && rowTime <= selectedMaxDateMs;
+        });
+
+        const tableHeaders = document.getElementById("csvTable").querySelector('thead');
+        const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
+
+        // If no data in range, clear chart
+        if (filteredRows.length === 0) {
+            if (electoralLineChart) {
+                electoralLineChart.data.datasets = [];
+                electoralLineChart.update();
+            }
+            console.warn("No data in selected date range for electoral chart.");
+            return;
+        }
+
+        const newDatasets = labels.map((label, index) => {
+            const color = customColors[index % customColors.length];
+            return {
+                label: label,
+                data: filteredRows.map(row => ({ x: row.date, y: row.values[index] })),
+                borderColor: color,
+                backgroundColor: color + '33',
+                fill: 'origin',
+                tension: 0.3,
+                borderWidth: 2
+            };
+        });
+
+        // Create or update the chart
+        if (electoralLineChart) {
+            electoralLineChart.data.datasets = newDatasets;
+            // Update the scales min/max to reflect the slider selection, ensuring proper zoom
+            electoralLineChart.options.scales.x.min = selectedMinDateMs;
+            electoralLineChart.options.scales.x.max = selectedMaxDateMs;
+            electoralLineChart.update();
+        } else {
+            electoralLineChart = new Chart(lineCtx, {
+                type: "line",
+                data: {
+                    datasets: newDatasets
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'MM/dd/yyyy', // **Crucial: Make sure this matches your CSV date format**
+                                tooltipFormat: 'MMM dd,PPPP',
+                                unit: 'day', // Suggest initial unit
+                                displayFormats: {
+                                    day: 'MMM d',
+                                    month: 'MMM yyyy'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                            min: selectedMinDateMs, // Set initial scale min to slider min
+                            max: selectedMaxDateMs  // Set initial scale max to slider max
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Votes'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
+    // Independence Data Fetch Function (No changes needed for this specific feature)
     function fetchIndependenceData() {
-        fetch("outputPar.csv?_=${new Date().getTime()}") // Corrected path: removed "docs/"
+        fetch("outputPar.csv?" + new Date().getTime()) // Cache-busting
             .then(res => res.text())
             .then(data => {
                 const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
@@ -379,7 +527,6 @@
 
                 // Build table
                 const table = document.getElementById("csvTableRight");
-                // Clear previous content
                 table.innerHTML = '';
                 const thead = table.createTHead();
                 const headerRow = thead.insertRow();
@@ -390,7 +537,7 @@
                 });
                 const tbody = table.createTBody();
                 for (let i = 1; i < rows.length; i++) {
-                    const row = tbody.insertRow(); // Corrected: changed insertCell() to insertRow()
+                    const row = tbody.insertRow();
                     rows[i].forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
@@ -398,7 +545,6 @@
                 }
 
                 // Line chart (time-scaled)
-                const lineLabels = rows.slice(1).map(row => row[0]); // Dates
                 const datasets = headers.slice(1).map((header, i) => ({
                     label: header,
                     data: rows.slice(1).map(row => ({ x: row[0], y: parseFloat(row[i + 1]) })),
@@ -408,11 +554,10 @@
                 }));
 
                 const ctxLine = document.getElementById("lineChartRight").getContext("2d");
-                // Destroy previous chart instance
-                if (window.independenceLineChart) {
-                    window.independenceLineChart.destroy();
+                if (independenceLineChart) {
+                    independenceLineChart.destroy();
                 }
-                window.independenceLineChart = new Chart(ctxLine, {
+                independenceLineChart = new Chart(ctxLine, {
                     type: "line",
                     data: {
                         datasets: datasets
@@ -441,11 +586,10 @@
                 document.getElementById("pieTitleRight").textContent =
                     `${lastRow[0]}'s Independence Levels`;
 
-                // Destroy previous chart instance
-                if (window.independencePieChart) {
-                    window.independencePieChart.destroy();
+                if (independencePieChart) {
+                    independencePieChart.destroy();
                 }
-                window.independencePieChart = new Chart(document.getElementById("pieChartRight").getContext("2d"), {
+                independencePieChart = new Chart(document.getElementById("pieChartRight").getContext("2d"), {
                     type: "pie",
                     data: {
                         labels: pieLabels,
@@ -458,10 +602,11 @@
                         responsive: true
                     }
                 });
-            });
+            })
+            .catch(error => console.error("Error fetching independence data:", error));
     }
 
-    // --- NEW JAVASCRIPT FOR BUTTON LOGIC ---
+    // --- JAVASCRIPT FOR BUTTON LOGIC ---
     const selectionScreen = document.getElementById('selectionScreen');
     const mainHeader = document.getElementById('mainHeader');
     const contentWrapper = document.getElementById('contentWrapper');
@@ -470,90 +615,109 @@
     const viewIndependenceBtn = document.getElementById('viewIndependence');
     const backToSelectionBtn = document.getElementById('backToSelection');
     const body = document.body;
+    const leftContainer = document.getElementById('leftContainer');
+    const rightContainer = document.getElementById('rightContainer');
+
+    // Create the date range controls div once
+    const dateRangeControls = document.createElement('div');
+    dateRangeControls.id = 'dateRangeControls';
+    dateRangeControls.innerHTML = `
+        <label for="startDateSlider">Start Date:</label>
+        <input type="range" id="startDateSlider">
+        <span id="displayStartDate"></span><br>
+        <label for="endDateSlider">End Date:</label>
+        <input type="range" id="endDateSlider">
+        <span id="displayEndDate"></span>
+    `;
+
+    // Store the initial innerHTML of the containers (includes main elements, but not slider initially)
+    // Removed <p id="scaling_warn"> as data is now time-scaled
+    const initialLeftContainerHTML = `
+        <h2 id="pieTitle">Pie Chart</h2>
+        <canvas id="pieChart"></canvas>
+        <h2>Line Graph of All Data</h2>
+        <canvas id="lineChart"></canvas>
+        <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
+        <div id="lineExplanations"></div>
+        <h1>CSV Output Table</h1>
+        <table id="csvTable"></table>
+    `;
+
+    const initialRightContainerHTML = `
+        <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+        <canvas id="pieChartRight"></canvas>
+        <h2>Line Graph of Independence Data</h2>
+        <canvas id="lineChartRight"></canvas>
+        <h1>Independence Level Table</h1>
+        <table id="csvTableRight"></table>
+    `;
 
     // Function to hide all main content and show selection screen
     function showSelectionScreen() {
         selectionScreen.style.display = 'flex';
-        mainHeader.style.display = 'none'; // Hide the header
+        mainHeader.style.display = 'none';
         body.classList.remove('show-both', 'show-electoral', 'show-independence');
-        // Clear content when going back to prevent old data flicker
-        document.getElementById('leftContainer').innerHTML = '';
-        document.getElementById('rightContainer').innerHTML = '';
 
-        // Destroy any active charts when going back to selection screen
-        if (window.electoralLineChart) { window.electoralLineChart.destroy(); window.electoralLineChart = null; }
-        if (window.electoralPieChart) { window.electoralPieChart.destroy(); window.electoralPieChart = null; }
-        if (window.independenceLineChart) { window.independenceLineChart.destroy(); window.independenceLineChart = null; }
-        if (window.independencePieChart) { window.independencePieChart.destroy(); window.independencePieChart = null; }
+        // Clear content when going back to prevent old data flicker
+        leftContainer.innerHTML = '';
+        rightContainer.innerHTML = '';
+        // Hide date range controls by removing them from the DOM
+        if (dateRangeControls.parentNode) {
+            dateRangeControls.parentNode.removeChild(dateRangeControls);
+        }
+
+        destroyAllCharts();
     }
 
     // --- Event Listeners for buttons ---
 
     viewBothBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-electoral', 'show-independence');
         body.classList.add('show-both');
-        // Re-populate containers for fetching
-        document.getElementById('leftContainer').innerHTML = `
-            <h2 id="pieTitle">Pie Chart</h2>
-            <canvas id="pieChart"></canvas>
-            <h2>Line Graph of All Data</h2>
-            <p id="scaling_warn">Note data is not time-scaled.</p>
-            <canvas id="lineChart"></canvas>
-            <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
-            <div id="lineExplanations"></div>
-            <h1>CSV Output Table</h1>
-            <table id="csvTable"></table>
-        `;
-        document.getElementById('rightContainer').innerHTML = `
-            <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
-            <canvas id="pieChartRight"></canvas>
-            <h2>Line Graph of Independence Data</h2>
-            <canvas id="lineChartRight"></canvas>
-            <h1>Independence Level Table</h1>
-            <table id="csvTableRight"></table>
-        `;
+
+        leftContainer.innerHTML = initialLeftContainerHTML;
+        rightContainer.innerHTML = initialRightContainerHTML;
+        // Append slider controls *after* setting innerHTML
+        leftContainer.insertBefore(dateRangeControls, document.getElementById('lineChart').nextSibling); // Place after lineChart canvas
+        dateRangeControls.style.display = 'block'; // Ensure controls are shown
+
+        destroyAllCharts();
         fetchElectoralData();
         fetchIndependenceData();
     });
 
     viewElectoralBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-both', 'show-independence');
         body.classList.add('show-electoral');
-        // Re-populate only left container
-        document.getElementById('leftContainer').innerHTML = `
-            <h2 id="pieTitle">Pie Chart</h2>
-            <canvas id="pieChart"></canvas>
-            <h2>Line Graph of All Data</h2>
-            <p id="scaling_warn">Note data is not time-scaled.</p>
-            <canvas id="lineChart"></canvas>
-            <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
-            <div id="lineExplanations"></div>
-            <h1>CSV Output Table</h1>
-            <table id="csvTable"></table>
-        `;
-        document.getElementById('rightContainer').innerHTML = ''; // Ensure right is empty
+
+        leftContainer.innerHTML = initialLeftContainerHTML;
+        rightContainer.innerHTML = ''; // Ensure right is empty
+        // Append slider controls *after* setting innerHTML
+        leftContainer.insertBefore(dateRangeControls, document.getElementById('lineChart').nextSibling); // Place after lineChart canvas
+        dateRangeControls.style.display = 'block'; // Ensure controls are shown
+
+        destroyAllCharts();
         fetchElectoralData();
     });
 
     viewIndependenceBtn.addEventListener('click', () => {
         selectionScreen.style.display = 'none';
-        mainHeader.style.display = 'flex'; // Show the header
+        mainHeader.style.display = 'flex';
         body.classList.remove('show-both', 'show-electoral');
         body.classList.add('show-independence');
-        // Re-populate only right container
-        document.getElementById('leftContainer').innerHTML = ''; // Ensure left is empty
-        document.getElementById('rightContainer').innerHTML = `
-            <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
-            <canvas id="pieChartRight"></canvas>
-            <h2>Line Graph of Independence Data</h2>
-            <canvas id="lineChartRight"></canvas>
-            <h1>Independence Level Table</h1>
-            <table id="csvTableRight"></table>
-        `;
+
+        leftContainer.innerHTML = ''; // Ensure left is empty
+        rightContainer.innerHTML = initialRightContainerHTML;
+        // Hide date range controls for this view by removing them
+        if (dateRangeControls.parentNode) {
+            dateRangeControls.parentNode.removeChild(dateRangeControls);
+        }
+
+        destroyAllCharts();
         fetchIndependenceData();
     });
 
