@@ -231,7 +231,7 @@
 
     // Electoral Data Fetch Function
     function fetchElectoralData() {
-        fetch("output.csv")
+        fetch("output.csv?_=${new Date().getTime()}")
             .then(response => response.text())
             .then(data => {
                 const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
@@ -371,7 +371,7 @@
 
     // Independence Data Fetch Function
     function fetchIndependenceData() {
-        fetch("outputPar.csv") // Corrected path: removed "docs/"
+        fetch("outputPar.csv?_=${new Date().getTime()}") // Corrected path: removed "docs/"
             .then(res => res.text())
             .then(data => {
                 const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
