@@ -449,31 +449,33 @@
         const pieDateSlider = document.getElementById('pieDateSlider');
         const displayDate = document.getElementById('pieStartDate');
 
-        // replace startDateSlider with pieDateSlider
-        // endDateSlider delete
-        // display start and end date const merge to pieStartDate
-        // replace selectedMin/MaxDateMs with simply selectedDate
+        if (!pieDateSlider || !displayDate || allElectoralDataRows.length === 0) {
+            console.warn("Pie chart elements or data not available for update.");
+            return;
+        }
 
+        let selectedDateMs = parseInt(pieDateSlider.value);
+        displayDate.textContent = new Date(selectedDateMs).toLocaleDateString();
 
-        let selectedDate = parseInt(pieDateSlider.value);
+        const selectedRow = allElectoralDataRows.find(row => row.date.getTime() === selectedDateMs);
 
-        displayDate.textContent = new Date(selectedDate).toLocaleDateString();
+        if (!selectedRow) {
+            console.warn("No data found for the selected pie chart date.");
+            if (electoralPieChart) {
+                electoralPieChart.destroy();
+                electoralPieChart = null;
+            }
+            return;
+        }
 
-        const filteredRow = allElectoralDataRows.filter(row => {
-            const rowTime = row.date.getTime();
-            return rowTime == selectedDate;
-        });
+        const tableHeadersElement = document.getElementById("csvTable").querySelector('thead');
+        const headers = tableHeadersElement ? Array.from(tableHeadersElement.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
 
-        const tableHeaders = document.getElementById("csvTable").querySelector('thead');
-        const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
+        const pieLabels = headers;
+        const pieData = selectedRow.values; // Use the values from the found row
 
-        // careful filteredRow might be index, error prone
-        const mostRecentDate = filteredRow;
-        document.getElementById("pieTitle").textContent =
-            `${mostRecentDate}'s Election Results`;
+        document.getElementById("pieTitle").textContent = `${new Date(selectedDateMs).toLocaleDateString()}'s Election Results`;
 
-        const pieLabels = headers.slice(1);
-        const pieData = lastRowRaw.slice(1).map(v => parseFloat(v));
         const pieCtx = document.getElementById("pieChart").getContext("2d");
 
         if (electoralPieChart) {
