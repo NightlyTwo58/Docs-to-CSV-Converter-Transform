@@ -192,6 +192,26 @@
             margin: 0 10px;
             vertical-align: middle;
         }
+
+        #pieRangeControls {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        #pieRangeControls label,
+        #pieRangeControls span {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        #pieRangeControls input[type="range"] {
+            width: 80%;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -286,8 +306,9 @@
 
                 if (allElectoralDataRows.length === 0) {
                     console.error("No valid electoral data rows with parsable dates to display.");
-                    // Hide slider if no valid data
+                    // Hide sliders if no valid data
                     document.getElementById('dateRangeControls').style.display = 'none';
+                    document.getElementById('pieRangeControls').style.display = 'none';
                     return;
                 }
 
@@ -326,10 +347,29 @@
                     console.error("Date range slider elements not found.");
                 }
 
+                const pieDateSlider = document.getElementById('pieDateSlider');
+                const displayDate = document.getElementById('pieStartDate');
+
+                if(pieDateSlider) {
+                    pieDateSlider.min = electoralMinDateMs;
+                    pieDateSlider.max = electoralMaxDateMs;
+                    pieDateSlider.value = electoralMaxDateMs; // Default to most recent results
+                    pieDateSlider.step = 86400000; // 1 day in milliseconds (24*60*60*1000)
+
+                    // Initial display of dates
+                    displayDate.textContent = new Date(electoralMaxDateMs).toLocaleDateString();
+
+                    // event listener if pie date toggled to call update function
+                    pieDateSlider.oninput = updatePieChartDate;
+                } else {
+                    console.error("Pie date slider not found.");
+                }
+
                 // Show date range controls if valid data
                 document.getElementById('dateRangeControls').style.display = 'block';
+                document.getElementById('pieRangeControls').style.display = 'block';
 
-                // --- Table rendering (using rawRows to include headers) ---
+                // --- Table rendering ---
                 const table = document.getElementById("csvTable");
                 table.innerHTML = '';
                 const thead = table.createTHead();
@@ -375,6 +415,8 @@
                     }
                 });
 
+                updatePieChartDate();
+
                 // Initial drawing of the line chart with the full range
                 updateElectoralChartRange();
 
@@ -402,6 +444,55 @@
             .catch(error => console.error("Error fetching electoral data:", error));
     }
 
+
+    function updatePieChartDate() {
+        const pieDateSlider = document.getElementById('pieDateSlider');
+        const displayDate = document.getElementById('pieStartDate');
+
+        // replace startDateSlider with pieDateSlider
+        // endDateSlider delete
+        // display start and end date const merge to pieStartDate
+        // replace selectedMin/MaxDateMs with simply selectedDate
+
+
+        let selectedDate = parseInt(pieDateSlider.value);
+
+        displayDate.textContent = new Date(selectedDate).toLocaleDateString();
+
+        const filteredRow = allElectoralDataRows.filter(row => {
+            const rowTime = row.date.getTime();
+            return rowTime == selectedDate;
+        });
+
+        const tableHeaders = document.getElementById("csvTable").querySelector('thead');
+        const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
+
+        // careful filteredRow might be index, error prone
+        const mostRecentDate = filteredRow;
+        document.getElementById("pieTitle").textContent =
+            `${mostRecentDate}'s Election Results`;
+
+        const pieLabels = headers.slice(1);
+        const pieData = lastRowRaw.slice(1).map(v => parseFloat(v));
+        const pieCtx = document.getElementById("pieChart").getContext("2d");
+
+        if (electoralPieChart) {
+            electoralPieChart.destroy();
+        }
+        electoralPieChart = new Chart(pieCtx, {
+            type: "pie",
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: customColors.slice(0, pieLabels.length)
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    }
 
     function updateElectoralChartRange() {
         const startDateSlider = document.getElementById('startDateSlider');
@@ -630,6 +721,14 @@
         <span id="displayEndDate"></span>
     `;
 
+    const pieRangeControls = document.createElement('div');
+    dateRangeControls.id = 'pieRangeControls';
+    dateRangeControls.innerHTML = `
+        <label for="pieDateSlider">Start Date:</label>
+        <input type="range" id="pieDateSlider">
+        <span id="pieStartDate"></span><br>
+    `;
+
     // Store the initial innerHTML of the containers (includes main elements, but not slider initially)
     // Removed <p id="scaling_warn"> as data is now time-scaled
     const initialLeftContainerHTML = `
@@ -665,6 +764,9 @@
         if (dateRangeControls.parentNode) {
             dateRangeControls.parentNode.removeChild(dateRangeControls);
         }
+        if (pieRangeControls.parentNode) {
+            pieRangeControls.parentNode.removeChild(dateRangeControls);
+        }
 
         destroyAllCharts();
     }
@@ -679,7 +781,10 @@
 
         leftContainer.innerHTML = initialLeftContainerHTML;
         rightContainer.innerHTML = initialRightContainerHTML;
-        // Append slider controls *after* setting innerHTML
+
+        // Append slider controls *after* setting innerHTML\
+        leftContainer.insertBefore(pieRangeControls, document.getElementById('pieChart').nextSibling); // Place after pieChart canvas
+        pieRangeControls.style.display = 'block';
         leftContainer.insertBefore(dateRangeControls, document.getElementById('lineChart').nextSibling); // Place after lineChart canvas
         dateRangeControls.style.display = 'block'; // Ensure controls are shown
 
