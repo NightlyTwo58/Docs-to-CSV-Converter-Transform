@@ -43,6 +43,10 @@ public class Main {
             // Debugging output
             System.out.println("Paragraph: \"" + paragraphText + "\"");
 
+
+            String[] dateAndCoalition = paragraphText.split(",");
+            if (dateAndCoalition.length == 1) continue;
+            System.out.println("date + coalition: " + paragraphText + dateAndCoalition.length);
             String maybeDate = paragraphText.split(",")[0].trim();
             String maybeCoalition = paragraphText.split(",")[1].trim();
             // we can add a check for valid coalitions
@@ -52,7 +56,7 @@ public class Main {
                 dataMap.putIfAbsent(currentDate, new LinkedHashMap<>());
 
                 // TODO: check this regex!
-                if (maybeCoalition.matches("\\D(-\\D)*")) {
+                if (maybeCoalition.matches("\\D+(-\\D+)*")) {
                     String[] coalitionMembers = maybeCoalition.split("-");
                     coalitionMap.putIfAbsent(currentDate, coalitionMembers);
                 }
@@ -84,11 +88,9 @@ public class Main {
                 }
                 String date = entry.getKey();
                 if (coalitionMap.containsKey(date)) {
+                    writer.write("," + String.join("-", coalitionMap.get(date)));
+                } else {
                     writer.write(",");
-                    for (String member : coalitionMap.get(date)) {
-                        // TODO: will have an extra - at end, use normal instead of enhanced for loop to fix
-                        writer.write(member + "-");
-                    }
                 }
                 writer.newLine();
             }
