@@ -9,36 +9,37 @@
     <style>
         body {
           display: flex;
-          flex-direction: column;
+          flex-direction: column; /* Changed to column to accommodate the header */
           font-family: sans-serif;
-          justify-content: flex-start;
-          align-items: center;
+          justify-content: flex-start; /* Align content to the top */
+          align-items: center; /* Center horizontally if using column */
           min-height: 100vh;
           margin: 0;
-          padding-top: 60px;
+          padding-top: 60px; /* Add padding for the fixed header */
         }
 
+        /* Styles for the new fixed header */
         #mainHeader {
             width: 100%;
             height: 50px;
-            background-color: #f8f9fa;
+            background-color: #f8f9fa; /* Light grey background */
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
             padding: 0 20px;
             box-sizing: border-box;
-            position: fixed;
+            position: fixed; /* Make it stick to the top */
             top: 0;
             left: 0;
-            z-index: 999;
-            display: none;
+            z-index: 999; /* Below selection screen, above content */
+            display: none; /* Hidden by default, shown when content is active */
         }
 
         #mainHeader button {
             padding: 8px 15px;
             font-size: 0.9em;
             cursor: pointer;
-            background-color: #6c757d;
+            background-color: #6c757d; /* Muted button color */
             color: white;
             border: none;
             border-radius: 4px;
@@ -49,18 +50,19 @@
             background-color: #5a6268;
         }
 
+        /* Styles for the selection screen */
         #selectionScreen {
-            display: flex;
+            display: flex; /* Initially visible */
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            width: 100vw;
-            position: fixed;
+            height: 100vh; /* Take full viewport height */
+            width: 100vw; /* Take full viewport width */
+            position: fixed; /* Overlay on top */
             top: 0;
             left: 0;
-            background-color: white;
-            z-index: 1000;
+            background-color: white; /* Or any background you prefer */
+            z-index: 1000; /* Ensure it's on top of everything */
         }
 
         #selectionScreen h1 {
@@ -83,64 +85,70 @@
             background-color: #0056b3;
         }
 
+        /* Default hidden state for the content containers */
         #leftContainer, #rightContainer {
-            display: none;
+            display: none; /* Initially hidden */
+            /* Removed width: 50%; here, will be applied by JS/class */
             padding: 0 20px;
             box-sizing: border-box;
-            flex-grow: 1;
+            flex-grow: 1; /* Allow content to grow if body is column */
         }
 
+        /* Container for flexible row layout when content is shown */
         #contentWrapper {
-            display: flex;
-            width: 100%;
-            flex-wrap: wrap;
+            display: flex; /* Default to row layout for side-by-side */
+            width: 100%; /* Take full width below header */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens if needed */
         }
 
+        /* Styles for when content is visible */
         .show-both #mainHeader {
-            display: flex;
+            display: flex; /* Show header */
         }
         .show-both #contentWrapper {
-            flex-direction: row;
+            flex-direction: row; /* Ensure side-by-side */
         }
         .show-both #leftContainer,
         .show-both #rightContainer {
-            display: block;
-            width: 50%;
+            display: block; /* Show both */
+            width: 50%; /* Each takes half width */
         }
 
         .show-electoral #mainHeader {
-            display: flex;
+            display: flex; /* Show header */
         }
         .show-electoral #contentWrapper {
-            flex-direction: row;
-            justify-content: center;
+            flex-direction: row; /* Still keep flex direction as row for potential future expansion */
+            justify-content: center; /* Center the single container */
         }
         .show-electoral #leftContainer {
-            display: block;
-            width: 80%;
-            max-width: 900px;
+            display: block; /* Show only electoral */
+            width: 80%; /* Make it wider, or 100% if preferred */
+            max-width: 900px; /* Optional: limit max width for readability */
         }
         .show-electoral #rightContainer {
-            display: none;
+            display: none; /* Explicitly hide right */
         }
 
 
         .show-independence #mainHeader {
-            display: flex;
+            display: flex; /* Show header */
         }
         .show-independence #contentWrapper {
             flex-direction: row;
             justify-content: center;
         }
         .show-independence #rightContainer {
-            display: block;
-            width: 80%;
-            max-width: 900px;
+            display: block; /* Show only independence */
+            width: 80%; /* Make it wider, or 100% if preferred */
+            max-width: 900px; /* Optional: limit max width for readability */
         }
         .show-independence #leftContainer {
-            display: none;
+            display: none; /* Explicitly hide left */
         }
 
+
+        /* Existing styles below (with potential refinements) */
         table {
           border-collapse: collapse;
           width: 100%;
@@ -164,6 +172,7 @@
           margin-top: 8px;
         }
 
+        /* Styles for the new date range controls */
         #dateRangeControls {
             margin-top: 20px;
             padding: 10px;
@@ -171,7 +180,7 @@
             border-radius: 8px;
             background-color: #f9f9f9;
             text-align: center;
-            display: none;
+            display: none; /* Hidden by default */
         }
         #dateRangeControls label,
         #dateRangeControls span {
@@ -191,7 +200,7 @@
             border-radius: 8px;
             background-color: #f9f9f9;
             text-align: center;
-            display: none;
+            display: none; /* Hidden by default */
         }
         #pieRangeControls label,
         #pieRangeControls span {
@@ -202,11 +211,6 @@
             width: 80%;
             margin: 0 10px;
             vertical-align: middle;
-        }
-        #coalitionInfo {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #d9534f;
         }
     </style>
 </head>
@@ -226,7 +230,6 @@
 <div id="contentWrapper">
     <div id="leftContainer">
         <h2 id="pieTitle">Pie Chart</h2>
-        <div id="coalitionInfo"></div>
         <canvas id="pieChart"></canvas>
 
         <h2>Line Graph of All Data</h2>
@@ -262,15 +265,18 @@
         '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
     ];
 
+    // Global chart instances to manage their destruction
     let electoralPieChart = null;
     let electoralLineChart = null;
     let independencePieChart = null;
     let independenceLineChart = null;
 
-    let allElectoralDataRows = [];
+    // Global variables to store the raw parsed data and slider related info for electoral data
+    let allElectoralDataRows = []; // Stores all parsed rows from output.csv (date objects and values)
     let electoralMinDateMs = 0;
     let electoralMaxDateMs = 0;
 
+    // Helper to destroy all chart instances
     function destroyAllCharts() {
         if (electoralPieChart) { electoralPieChart.destroy(); electoralPieChart = null; }
         if (electoralLineChart) { electoralLineChart.destroy(); electoralLineChart = null; }
@@ -278,58 +284,63 @@
         if (independenceLineChart) { independenceLineChart.destroy(); independenceLineChart = null; }
     }
 
+    // Electoral Data Fetch Function
     function fetchElectoralData() {
-        fetch(`output.csv?_=${new Date().getTime()}`)
+        fetch(`output.csv?_=${new Date().getTime()}`) // Cache-busting
             .then(response => response.text())
             .then(data => {
                 const rawRows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
                 const headers = rawRows[0].map(header => header.trim());
 
-                // Store all electoral data, carefully separating values and coalition
+                // Parse data for line chart and store globally
                 allElectoralDataRows = rawRows.slice(1).map(row => {
-                    const date = new Date(row[0]);
+                    const date = new Date(row[0]); // Parse date (e.g., MM/dd/yyyy)
+                    // Ensure date is valid; if not, handle error or skip row
                     if (isNaN(date.getTime())) {
                         console.warn(`Invalid date encountered in output.csv: ${row[0]}. Skipping this row for time-based chart.`);
                         return null;
                     }
-                    // Values are from index 1 up to (but not including) the last column (Coalitions)
-                    const values = row.slice(1, headers.length - 1).map(parseFloat);
-                    // Coalition is the last column
-                    const coalition = row[headers.length - 1];
-                    return { date, values, coalition, rawRowData: row }; // Keep rawRowData for table rendering
-                }).filter(Boolean);
+                    const values = row.slice(1).map(parseFloat); // Convert string values to numbers
+                    return { date, values };
+                }).filter(Boolean); // Remove any null entries from invalid dates
 
                 if (allElectoralDataRows.length === 0) {
                     console.error("No valid electoral data rows with parsable dates to display.");
+                    // Hide sliders if no valid data
                     document.getElementById('dateRangeControls').style.display = 'none';
                     document.getElementById('pieRangeControls').style.display = 'none';
                     return;
                 }
 
+                // Sort data by date just in case, though CSV should ideally be sorted
                 allElectoralDataRows.sort((a, b) => a.date.getTime() - b.date.getTime());
 
+                // Determine min and max dates for the slider
                 electoralMinDateMs = allElectoralDataRows[0].date.getTime();
                 electoralMaxDateMs = allElectoralDataRows[allElectoralDataRows.length - 1].date.getTime();
 
+                // Set up sliders
                 const startDateSlider = document.getElementById('startDateSlider');
                 const endDateSlider = document.getElementById('endDateSlider');
                 const displayStartDate = document.getElementById('displayStartDate');
                 const displayEndDate = document.getElementById('displayEndDate');
 
-                if (startDateSlider && endDateSlider) {
+                if (startDateSlider && endDateSlider) { // Ensure elements exist
                     startDateSlider.min = electoralMinDateMs;
                     startDateSlider.max = electoralMaxDateMs;
-                    startDateSlider.value = electoralMinDateMs;
-                    startDateSlider.step = 86400000;
+                    startDateSlider.value = electoralMinDateMs; // Default to full range
+                    startDateSlider.step = 86400000; // 1 day in milliseconds (24*60*60*1000)
 
                     endDateSlider.min = electoralMinDateMs;
                     endDateSlider.max = electoralMaxDateMs;
-                    endDateSlider.value = electoralMaxDateMs;
-                    endDateSlider.step = 86400000;
+                    endDateSlider.value = electoralMaxDateMs; // Default to full range
+                    endDateSlider.step = 86400000; // 1 day in milliseconds
 
+                    // Initial display of dates
                     displayStartDate.textContent = new Date(electoralMinDateMs).toLocaleDateString();
                     displayEndDate.textContent = new Date(electoralMaxDateMs).toLocaleDateString();
 
+                    // Add event listeners only once. If they were already added, oninput will overwrite.
                     startDateSlider.oninput = updateElectoralChartRange;
                     endDateSlider.oninput = updateElectoralChartRange;
                 } else {
@@ -342,19 +353,23 @@
                 if(pieDateSlider) {
                     pieDateSlider.min = electoralMinDateMs;
                     pieDateSlider.max = electoralMaxDateMs;
-                    pieDateSlider.value = electoralMaxDateMs;
-                    pieDateSlider.step = 86400000;
+                    pieDateSlider.value = electoralMaxDateMs; // Default to most recent results
+                    pieDateSlider.step = 86400000; // 1 day in milliseconds (24*60*60*1000)
 
+                    // Initial display of dates
                     displayDate.textContent = new Date(electoralMaxDateMs).toLocaleDateString();
 
+                    // event listener if pie date toggled to call update function
                     pieDateSlider.oninput = updatePieChartDate;
                 } else {
                     console.error("Pie date slider not found.");
                 }
 
+                // Show date range controls if valid data
                 document.getElementById('dateRangeControls').style.display = 'block';
                 document.getElementById('pieRangeControls').style.display = 'block';
 
+                // --- Table rendering ---
                 const table = document.getElementById("csvTable");
                 table.innerHTML = '';
                 const thead = table.createTHead();
@@ -365,33 +380,62 @@
                     headerRow.appendChild(th);
                 });
                 const tbody = table.createTBody();
-                allElectoralDataRows.forEach(rowData => {
+                for (let i = 1; i < rawRows.length; i++) {
                     const row = tbody.insertRow();
-                    rowData.rawRowData.forEach(cell => {
+                    rawRows[i].forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
                     });
+                }
+
+                // --- Pie chart from last row of raw data ---
+                const lastRowRaw = rawRows[rawRows.length - 1];
+                const mostRecentDate = lastRowRaw[0];
+                document.getElementById("pieTitle").textContent =
+                    `${mostRecentDate}'s Election Results`;
+
+                const pieLabels = headers.slice(1);
+                const pieData = lastRowRaw.slice(1).map(v => parseFloat(v));
+                const pieCtx = document.getElementById("pieChart").getContext("2d");
+
+                if (electoralPieChart) {
+                    electoralPieChart.destroy();
+                }
+                electoralPieChart = new Chart(pieCtx, {
+                    type: "pie",
+                    data: {
+                        labels: pieLabels,
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: customColors.slice(0, pieLabels.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
                 });
 
                 updatePieChartDate();
+
+                // Initial drawing of the line chart with the full range
                 updateElectoralChartRange();
 
+                // --- Explanations ---
                 const explanationContainer = document.getElementById("lineExplanations");
                 explanationContainer.innerHTML = '';
                 const explanations = {
-                    "SA": "(Socialist Alliance) (Academically Far-Left, Socially Left) A historical socialist/communist party that was the inspiration for the RLP. It fell because it was too idealistic, something the RLP rectified. Led the First Academic Revolution in eighth grade.",
+                    "SA": "(Socialist Alliance) (Academically Far-Left, Socially Left) A historical socialist/communist party that was the inspiration for the RLP. It declined in popularity because it was too idealistic, something the RLP rectified. It sees occasional resurgences when RLP policies get old.",
                     "MCP": "(Moderate-Centre Party) (Academically Left, Socially Left) The big-tent left-wing/centrist party, similar to the modern democratic party. Originally founded as a newer broad centrist alternative to the LEP back when it was a socially leftist party, now it has totally supplanted the LEP in its former role and shifted leftward socially. Main advocate for rest and other indirect measures to promote academic performance in addition to the YPP and sometimes the LEP.",
                     "LEP": "(Liberty-Equality Party) (Academically Left, Socially Right [Formerly Left]) Before the rise of the RLP, the LEP was the dominant party in early high school. The old LEP stood for liberal ideals, combined with liberal academic approaches. However, in the run-up to college, a series of debacles caused by its lax academic stance caused it to loose much popularity, with its former little sister the MCP taking much its former influence in the liberal sphere. Afterwards, the LEP has reinvented itself as a stalwartly socially conservative (right-wign) party promoting \"properity\", hanging on left-wing academic policies. The modern LEP enjoys electoral successes usually under conditions of demobilization after an academic semester.",
                     "MU": "(Musical Union) (Nonpartisan) As the domestic musical industry faced attacks and potential decline in high school under growing academic pressure, it felt that no party was willing to represent its interests. Thus, the MU was born as a splinter faction of the AU. The Musical Union represents the Richardian interest in piano/composing at a given time. It is nonpartisan and works with any parties willing to secure music in the budget.",
                     "AU": "(Academic Union) (Academically Center-Right, Socially Right) Originally a direct competitor to the RLP with almost the exact same platform (albeit taking even less of a social position), the AU was beset by internal infighting and faded in obscurity. As of late it has seen a resurgence in popularity as many realize the republic lacks an alternative to the dying RLP conservative hegenomy, with the AU becoming a more academically purist alternative to the RLP.",
                     "NAP": "(Nationalist Alliance Party) (Academically Far-Right, Socially Far-Right) Similar to the SA, a historical far-right party that exists during the early unstable stages of Richardian democracy that is no longer extant. Advocated sharp nationalistic academic change, ultra-conservative social ideology (something lost to later parties) and strengthening of the executive branch to effect that.",
-                    "RLP": "(Reform Labour Party) (Academically Right, Socially Center-Right) The dominant party since the fall of the LEP, it has recently seen struggles for influence. The RLP was born out of popular dissatification with the policies of the SA and a desire for a more syncretist approach to economics, combining right-wing \"grit\" with left-wing optimism and planning. The resulting RLP swept to power in the Second Academic Revolution in the sophomore year of high school. The RLP holds light conservative social views, believing that academics is most of their platform. The RLP is the academic party; other parties are often the exception to the RLP rule.",
-                    "CDoP": "(Crown Dominion Party) (Academically Right) Represents parental influence in the Richardian republic, as our constitutional structure still grants significant powers to parents as a Dominion of a broader Empire. The CDoP nominally doesn't hold \"petty\" positions on domestic politics, but typically acts academically and socially conservative. Most left-wing parties hold somewhat of a disdain for the CDoP.",
-                    "YPP": "(Youth Power Party) (Academically Left, Socially Left) Represents the youth and liberal academics. This party has a particularly energetic spirit, focusing on friendships, love, and \"responsible\" light academics as its primary platform. Particularly with new friends or partners, or academic booms that allow the pursuit of more relaxed component policies, the YPP rules. It has no problem with collaborating with the MCP, as their views and goals usually align.",
+                    "RLP": "(Reform Labour Party) (Academically Right, Socially Center-Right) The dominant party since the fall of the LEP, it has recently seen struggles for influence. The RLP was born out of popular dissatification with the policies of the SA and a desire for a more syncretist approach to economics, combining right-wing \"grit\" with left-wing optimism and planning. The resulting RLP swept to power in the Second Academic Revolution in the sophomore year of high school. The RLP holds light conservative social views, believing that academics is their primary platform. The RLP is the republic's premier academic party; other parties are often the exception to the RLP hegenomy.",
+                    "CDoP": "(Crown Dominion Party) (Academically Far-Right, Socially Right) Represents parental influence and support in the Richardian republic, as our constitutional structure still grants significant powers to parents as a Dominion of a broader Empire. The CDoP nominally doesn't hold \"petty\" positions on domestic politics, but typically acts academically and socially conservative. Most left-wing parties hold somewhat of a disdain for the CDoP.",
+                    "YPP": "(Youth Power Party) (Academically Left, Socially Left) Represents the youth and liberal academics. Nicknamed the “happy party,” it has a particularly energetic spirit, focusing on friendships, love, and \"responsible\" light academics as its primary platform. The YPP enjoys sustained popularity with new friends, partners, or academic booms that allow the pursuit of more relaxed academic policies. It has no problem with collaborating with the MCP, as their views and goals usually align. As of lately, the YPP has positioned itself as the party representing rebellion against the parents instead of autonomy advocated for by more moderate parties. This has pitted it directly against the CDoP.”,
                 };
 
-                // Headers for explanations should exclude 'Date' and 'Coalitions'
-                headers.slice(1, headers.length - 1).forEach(label => {
+                headers.slice(1).forEach(label => { // Using headers.slice(1) to get labels
                     const p = document.createElement("p");
                     p.innerHTML = `<strong>${label}:</strong> ${explanations[label] || "No description available."}`;
                     explanationContainer.appendChild(p);
@@ -404,7 +448,6 @@
     function updatePieChartDate() {
         const pieDateSlider = document.getElementById('pieDateSlider');
         const displayDate = document.getElementById('pieStartDate');
-        const coalitionInfoDiv = document.getElementById('coalitionInfo');
 
         if (!pieDateSlider || !displayDate || allElectoralDataRows.length === 0) {
             console.warn("Pie chart elements or data not available for update.");
@@ -422,35 +465,14 @@
                 electoralPieChart.destroy();
                 electoralPieChart = null;
             }
-            coalitionInfoDiv.textContent = "";
             return;
         }
 
         const tableHeadersElement = document.getElementById("csvTable").querySelector('thead');
-        // Pie chart labels should exclude 'Date' and 'Coalitions'
-        const pieLabels = tableHeadersElement ? Array.from(tableHeadersElement.querySelectorAll('th')).map(th => th.textContent).slice(1, -1) : [];
+        const headers = tableHeadersElement ? Array.from(tableHeadersElement.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
 
-        const pieData = selectedRow.values;
-        const coalitionString = selectedRow.coalition;
-
-        const backgroundColors = customColors.slice(0, pieLabels.length);
-
-        let coalitionParties = [];
-        if (coalitionString && coalitionString.trim() !== '') {
-            coalitionParties = coalitionString.split('-').map(p => p.trim());
-            coalitionInfoDiv.textContent = `Coalition: ${coalitionString}`;
-            coalitionInfoDiv.style.display = 'block';
-        } else {
-            coalitionInfoDiv.textContent = "";
-            coalitionInfoDiv.style.display = 'none';
-        }
-
-        coalitionParties.forEach(party => {
-            const index = pieLabels.indexOf(party);
-            if (index !== -1) {
-                backgroundColors[index] = customColors[index % customColors.length] + '80';
-            }
-        });
+        const pieLabels = headers;
+        const pieData = selectedRow.values; // Use the values from the found row
 
         document.getElementById("pieTitle").textContent = `${new Date(selectedDateMs).toLocaleDateString()}'s Election Results`;
 
@@ -465,7 +487,7 @@
                 labels: pieLabels,
                 datasets: [{
                     data: pieData,
-                    backgroundColor: backgroundColors
+                    backgroundColor: customColors.slice(0, pieLabels.length)
                 }]
             },
             options: {
@@ -481,6 +503,7 @@
         const displayEndDate = document.getElementById('displayEndDate');
         const lineCtx = document.getElementById("lineChart").getContext("2d");
 
+        // Ensure sliders are present and data is loaded
         if (!startDateSlider || !endDateSlider || allElectoralDataRows.length === 0) {
             return;
         }
@@ -488,8 +511,11 @@
         let selectedMinDateMs = parseInt(startDateSlider.value);
         let selectedMaxDateMs = parseInt(endDateSlider.value);
 
+        // Ensure start date is not after end date; adjust if needed for UX
         if (selectedMinDateMs > selectedMaxDateMs) {
-
+            // Option: set end date to start date or vice versa for a single point
+            // For now, Chart.js will just draw an empty range.
+            // A more robust UI would prevent this or automatically adjust.
         }
 
         displayStartDate.textContent = new Date(selectedMinDateMs).toLocaleDateString();
@@ -501,9 +527,9 @@
         });
 
         const tableHeaders = document.getElementById("csvTable").querySelector('thead');
-        // Line chart labels should exclude 'Date' and 'Coalitions'
-        const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1, -1) : [];
+        const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1) : [];
 
+        // If no data in range, clear chart
         if (filteredRows.length === 0) {
             if (electoralLineChart) {
                 electoralLineChart.data.datasets = [];
@@ -526,8 +552,10 @@
             };
         });
 
+        // Create or update the chart
         if (electoralLineChart) {
             electoralLineChart.data.datasets = newDatasets;
+            // Update the scales min/max to reflect the slider selection, ensuring proper zoom
             electoralLineChart.options.scales.x.min = selectedMinDateMs;
             electoralLineChart.options.scales.x.max = selectedMaxDateMs;
             electoralLineChart.update();
@@ -553,9 +581,9 @@
                         x: {
                             type: 'time',
                             time: {
-                                parser: 'MM/dd/yyyy',
+                                parser: 'MM/dd/yyyy', // **Crucial: Make sure this matches your CSV date format**
                                 tooltipFormat: 'MMM dd,PPPP',
-                                unit: 'day',
+                                unit: 'day', // Suggest initial unit
                                 displayFormats: {
                                     day: 'MMM d',
                                     month: 'MMM yyyy'
@@ -565,8 +593,8 @@
                                 display: true,
                                 text: 'Date'
                             },
-                            min: selectedMinDateMs,
-                            max: selectedMaxDateMs
+                            min: selectedMinDateMs, // Set initial scale min to slider min
+                            max: selectedMaxDateMs  // Set initial scale max to slider max
                         },
                         y: {
                             beginAtZero: true,
@@ -582,31 +610,34 @@
     }
 
 
+    // Independence Data Fetch Function (No changes needed for this specific feature)
     function fetchIndependenceData() {
-        fetch("outputPar.csv?" + new Date().getTime())
+        fetch("outputPar.csv?" + new Date().getTime()) // Cache-busting
             .then(res => res.text())
             .then(data => {
                 const rows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
                 const headers = rows[0].map(h => h.trim());
 
+                // Build table
                 const table = document.getElementById("csvTableRight");
                 table.innerHTML = '';
                 const thead = table.createTHead();
-                const headerRow = thead.insertCell();
-                headers.forEach(headerText => {
+                const headerRow = thead.insertRow();
+                headers.forEach(header => {
                     const th = document.createElement("th");
-                    th.textContent = headerText;
+                    th.textContent = header;
                     headerRow.appendChild(th);
                 });
                 const tbody = table.createTBody();
                 for (let i = 1; i < rows.length; i++) {
                     const row = tbody.insertRow();
-                    rows[i].forEach(cellText => {
+                    rows[i].forEach(cell => {
                         const td = row.insertCell();
-                        td.textContent = cellText;
+                        td.textContent = cell;
                     });
                 }
 
+                // Line chart (time-scaled)
                 const datasets = headers.slice(1).map((header, i) => ({
                     label: header,
                     data: rows.slice(1).map(row => ({ x: row[0], y: parseFloat(row[i + 1]) })),
@@ -631,38 +662,27 @@
                                 type: 'time',
                                 time: {
                                     parser: 'MM/dd/yyyy',
-                                    tooltipFormat: 'MMM dd, PPPP',
-                                    unit: 'day',
-                                    displayFormats: {
-                                        day: 'MMM d',
-                                        month: 'MMM yyyy'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Date'
+                                    tooltipFormat: 'MMM dd,PPPP'
                                 }
                             },
                             y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Value'
-                                }
+                                beginAtZero: true
                             }
                         }
                     }
                 });
 
+                // Pie chart for last row
                 const lastRow = rows[rows.length - 1];
                 const pieLabels = headers.slice(1);
                 const pieData = lastRow.slice(1).map(v => parseFloat(v));
-                const ctxPie = document.getElementById("pieChartRight").getContext("2d");
+                document.getElementById("pieTitleRight").textContent =
+                    `${lastRow[0]}'s Independence Levels`;
 
                 if (independencePieChart) {
                     independencePieChart.destroy();
                 }
-                independencePieChart = new Chart(ctxPie, {
+                independencePieChart = new Chart(document.getElementById("pieChartRight").getContext("2d"), {
                     type: "pie",
                     data: {
                         labels: pieLabels,
@@ -679,39 +699,141 @@
             .catch(error => console.error("Error fetching independence data:", error));
     }
 
-    document.getElementById('viewBoth').addEventListener('click', () => {
-        document.getElementById('selectionScreen').style.display = 'none';
-        document.body.className = 'show-both';
+    // --- JAVASCRIPT FOR BUTTON LOGIC ---
+    const selectionScreen = document.getElementById('selectionScreen');
+    const mainHeader = document.getElementById('mainHeader');
+    const contentWrapper = document.getElementById('contentWrapper');
+    const viewBothBtn = document.getElementById('viewBoth');
+    const viewElectoralBtn = document.getElementById('viewElectoral');
+    const viewIndependenceBtn = document.getElementById('viewIndependence');
+    const backToSelectionBtn = document.getElementById('backToSelection');
+    const body = document.body;
+    const leftContainer = document.getElementById('leftContainer');
+    const rightContainer = document.getElementById('rightContainer');
+
+    // Create the date range controls div once
+    const dateRangeControls = document.createElement('div');
+    dateRangeControls.id = 'dateRangeControls';
+    dateRangeControls.innerHTML = `
+        <label for="startDateSlider">Start Date:</label>
+        <input type="range" id="startDateSlider">
+        <span id="displayStartDate"></span><br>
+        <label for="endDateSlider">End Date:</label>
+        <input type="range" id="endDateSlider">
+        <span id="displayEndDate"></span>
+    `;
+
+    const pieRangeControls = document.createElement('div');
+    pieRangeControls.id = 'pieRangeControls';
+    pieRangeControls.innerHTML = `
+        <label for="pieDateSlider">Start Date:</label>
+        <input type="range" id="pieDateSlider">
+        <span id="pieStartDate"></span><br>
+    `;
+
+    // Store the initial innerHTML of the containers (includes main elements, but not slider initially)
+    // Removed <p id="scaling_warn"> as data is now time-scaled
+    const initialLeftContainerHTML = `
+        <h2 id="pieTitle">Pie Chart</h2>
+        <canvas id="pieChart"></canvas>
+        <h2>Line Graph of All Data</h2>
+        <canvas id="lineChart"></canvas>
+        <p id="explanationIntro">Much like in real life, descriptions of left and right wing aren't perfect dichotomies. In Richardian politics, there is a dual scale of left and right. The first is socially left or right. This very much like in real life, with left reflecting more liberal thought, and right reflecting more conservative beliefs. The other scale is the academic left or right. This describes the party's approach to academics, the dominant concern in Richardian politics. Academically left-leaning parties tend to prefer a holistic approach, increasing rest, friendships, and extracurricular in the hope that they will indirectly improve academic performance (think "cutting taxes" or "social spending" as a real-life analogue). Academically right-leaning parties believe that the only solution to academic problems is simply confronting them with more hard work (think "hard-on-crime" as a real-life analogue). Much like in real life, many parties don't lean the same direction on both spectrums.</p>
+        <div id="lineExplanations"></div>
+        <h1>CSV Output Table</h1>
+        <table id="csvTable"></table>
+    `;
+
+    const initialRightContainerHTML = `
+        <h2 id="pieTitleRight">Pie Chart (OutputPar)</h2>
+        <canvas id="pieChartRight"></canvas>
+        <h2>Line Graph of Independence Data</h2>
+        <canvas id="lineChartRight"></canvas>
+        <h1>Independence Level Table</h1>
+        <table id="csvTableRight"></table>
+    `;
+
+    // Function to hide all main content and show selection screen
+    function showSelectionScreen() {
+        selectionScreen.style.display = 'flex';
+        mainHeader.style.display = 'none';
+        body.classList.remove('show-both', 'show-electoral', 'show-independence');
+
+        // Clear content when going back to prevent old data flicker
+        leftContainer.innerHTML = '';
+        rightContainer.innerHTML = '';
+        // Hide date range controls by removing them from the DOM
+        if (dateRangeControls.parentNode) {
+            dateRangeControls.parentNode.removeChild(dateRangeControls);
+        }
+        if (pieRangeControls.parentNode) {
+            pieRangeControls.parentNode.removeChild(dateRangeControls);
+        }
+
+        destroyAllCharts();
+    }
+
+    // --- Event Listeners for buttons ---
+
+    viewBothBtn.addEventListener('click', () => {
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex';
+        body.classList.remove('show-electoral', 'show-independence');
+        body.classList.add('show-both');
+
+        leftContainer.innerHTML = initialLeftContainerHTML;
+        rightContainer.innerHTML = initialRightContainerHTML;
+
+        // Append slider controls *after* setting innerHTML\
+        leftContainer.insertBefore(pieRangeControls, document.getElementById('pieChart').nextSibling); // Place after pieChart canvas
+        pieRangeControls.style.display = 'block';
+        leftContainer.insertBefore(dateRangeControls, document.getElementById('lineChart').nextSibling); // Place after lineChart canvas
+        dateRangeControls.style.display = 'block'; // Ensure controls are shown
+
+        destroyAllCharts();
         fetchElectoralData();
         fetchIndependenceData();
     });
 
-    document.getElementById('viewElectoral').addEventListener('click', () => {
-        document.getElementById('selectionScreen').style.display = 'none';
-        document.body.className = 'show-electoral';
+    viewElectoralBtn.addEventListener('click', () => {
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex';
+        body.classList.remove('show-both', 'show-independence');
+        body.classList.add('show-electoral');
+
+        leftContainer.innerHTML = initialLeftContainerHTML;
+        rightContainer.innerHTML = ''; // Ensure right is empty
+        // Append slider controls *after* setting innerHTML
+        leftContainer.insertBefore(dateRangeControls, document.getElementById('lineChart').nextSibling); // Place after lineChart canvas
+        dateRangeControls.style.display = 'block'; // Ensure controls are shown
+
+        destroyAllCharts();
         fetchElectoralData();
-        destroyAllCharts();
-        independencePieChart = null;
-        independenceLineChart = null;
     });
 
-    document.getElementById('viewIndependence').addEventListener('click', () => {
-        document.getElementById('selectionScreen').style.display = 'none';
-        document.body.className = 'show-independence';
+    viewIndependenceBtn.addEventListener('click', () => {
+        selectionScreen.style.display = 'none';
+        mainHeader.style.display = 'flex';
+        body.classList.remove('show-both', 'show-electoral');
+        body.classList.add('show-independence');
+
+        leftContainer.innerHTML = ''; // Ensure left is empty
+        rightContainer.innerHTML = initialRightContainerHTML;
+        // Hide date range controls for this view by removing them
+        if (dateRangeControls.parentNode) {
+            dateRangeControls.parentNode.removeChild(dateRangeControls);
+        }
+
+        destroyAllCharts();
         fetchIndependenceData();
-        destroyAllCharts();
-        electoralPieChart = null;
-        electoralLineChart = null;
     });
 
-    document.getElementById('backToSelection').addEventListener('click', () => {
-        document.getElementById('selectionScreen').style.display = 'flex';
-        document.body.className = '';
-        document.getElementById('dateRangeControls').style.display = 'none';
-        document.getElementById('pieRangeControls').style.display = 'none';
-        destroyAllCharts();
-    });
+    // Event listener for the new "Back to Selection" button
+    backToSelectionBtn.addEventListener('click', showSelectionScreen);
+
+    // Initial state: show selection screen
+    showSelectionScreen();
+
 </script>
-
 </body>
 </html>
