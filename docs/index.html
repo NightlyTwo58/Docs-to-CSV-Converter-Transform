@@ -285,15 +285,18 @@
                 const rawRows = data.trim().split("\n").map(row => row.split(",").filter(cell => cell.trim() !== ""));
                 const headers = rawRows[0].map(header => header.trim());
 
+                // Store all electoral data, carefully separating values and coalition
                 allElectoralDataRows = rawRows.slice(1).map(row => {
                     const date = new Date(row[0]);
                     if (isNaN(date.getTime())) {
                         console.warn(`Invalid date encountered in output.csv: ${row[0]}. Skipping this row for time-based chart.`);
                         return null;
                     }
-                    const values = row.slice(1, row.length - 1).map(parseFloat);
-                    const coalition = row[row.length - 1];
-                    return { date, values, coalition };
+                    // Values are from index 1 up to (but not including) the last column (Coalitions)
+                    const values = row.slice(1, headers.length - 1).map(parseFloat);
+                    // Coalition is the last column
+                    const coalition = row[headers.length - 1];
+                    return { date, values, coalition, rawRowData: row }; // Keep rawRowData for table rendering
                 }).filter(Boolean);
 
                 if (allElectoralDataRows.length === 0) {
@@ -362,13 +365,13 @@
                     headerRow.appendChild(th);
                 });
                 const tbody = table.createTBody();
-                for (let i = 1; i < rawRows.length; i++) {
+                allElectoralDataRows.forEach(rowData => {
                     const row = tbody.insertRow();
-                    rawRows[i].forEach(cell => {
+                    rowData.rawRowData.forEach(cell => {
                         const td = row.insertCell();
                         td.textContent = cell;
                     });
-                }
+                });
 
                 updatePieChartDate();
                 updateElectoralChartRange();
@@ -387,7 +390,8 @@
                     "YPP": "(Youth Power Party) (Academically Left, Socially Left) Represents the youth and liberal academics. This party has a particularly energetic spirit, focusing on friendships, love, and \"responsible\" light academics as its primary platform. Particularly with new friends or partners, or academic booms that allow the pursuit of more relaxed component policies, the YPP rules. It has no problem with collaborating with the MCP, as their views and goals usually align.",
                 };
 
-                headers.slice(1, headers.length -1).forEach(label => {
+                // Headers for explanations should exclude 'Date' and 'Coalitions'
+                headers.slice(1, headers.length - 1).forEach(label => {
                     const p = document.createElement("p");
                     p.innerHTML = `<strong>${label}:</strong> ${explanations[label] || "No description available."}`;
                     explanationContainer.appendChild(p);
@@ -423,13 +427,13 @@
         }
 
         const tableHeadersElement = document.getElementById("csvTable").querySelector('thead');
-        const headers = tableHeadersElement ? Array.from(tableHeadersElement.querySelectorAll('th')).map(th => th.textContent).slice(1, -1) : [];
+        // Pie chart labels should exclude 'Date' and 'Coalitions'
+        const pieLabels = tableHeadersElement ? Array.from(tableHeadersElement.querySelectorAll('th')).map(th => th.textContent).slice(1, -1) : [];
 
-        const pieLabels = headers;
         const pieData = selectedRow.values;
         const coalitionString = selectedRow.coalition;
 
-        const backgroundColors = customColors.slice(0, pieLabels.length).map(color => color);
+        const backgroundColors = customColors.slice(0, pieLabels.length);
 
         let coalitionParties = [];
         if (coalitionString && coalitionString.trim() !== '') {
@@ -497,6 +501,7 @@
         });
 
         const tableHeaders = document.getElementById("csvTable").querySelector('thead');
+        // Line chart labels should exclude 'Date' and 'Coalitions'
         const labels = tableHeaders ? Array.from(tableHeaders.querySelectorAll('th')).map(th => th.textContent).slice(1, -1) : [];
 
         if (filteredRows.length === 0) {
@@ -587,18 +592,18 @@
                 const table = document.getElementById("csvTableRight");
                 table.innerHTML = '';
                 const thead = table.createTHead();
-                const headerRow = thead.insertRow();
-                headers.forEach(header => {
+                const headerRow = thead.insertCell();
+                headers.forEach(headerText => {
                     const th = document.createElement("th");
-                    th.textContent = header;
+                    th.textContent = headerText;
                     headerRow.appendChild(th);
                 });
                 const tbody = table.createTBody();
                 for (let i = 1; i < rows.length; i++) {
                     const row = tbody.insertRow();
-                    rows[i].forEach(cell => {
+                    rows[i].forEach(cellText => {
                         const td = row.insertCell();
-                        td.textContent = cell;
+                        td.textContent = cellText;
                     });
                 }
 
