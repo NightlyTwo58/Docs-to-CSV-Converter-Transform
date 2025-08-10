@@ -529,59 +529,57 @@
             };
         });
 
+
         if (electoralLineChart) {
-            electoralLineChart.data.datasets = newDatasets;
-            electoralLineChart.options.scales.x.min = selectedMinDateMs;
-            electoralLineChart.options.scales.x.max = selectedMaxDateMs;
-            electoralLineChart.update();
-        } else {
-            electoralLineChart = new Chart(lineCtx, {
-                type: "line",
-                data: {
-                    datasets: newDatasets
+            electoralLineChart.destroy();
+        }
+
+        electoralLineChart = new Chart(lineCtx, {
+            type: "line",
+            data: {
+                datasets: newDatasets
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
                 },
-                options: {
-                    responsive: true,
-                    interaction: {
+                plugins: {
+                    tooltip: {
                         mode: 'index',
                         intersect: false
                     },
-                    plugins: {
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                parser: 'MM/dd/yyyy',
-                                tooltipFormat: 'MMM dd,PPPP',
-                                unit: 'day',
-                                displayFormats: {
-                                    day: 'MMM d',
-                                    month: 'MMM yyyy'
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Date'
-                            },
-                            min: selectedMinDateMs,
-                            max: selectedMaxDateMs
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Votes'
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            parser: 'MM/dd/yyyy',
+                            tooltipFormat: 'MMM dd,PPPP',
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d',
+                                month: 'MMM yyyy'
                             }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        },
+                        min: selectedMinDateMs,
+                        max: selectedMaxDateMs
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Votes'
                         }
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
     function fetchIndependenceData() {
@@ -764,6 +762,8 @@
 
         fetchElectoralData();
         fetchIndependenceData();
+        console.log(electoralLineChart);
+        console.log(independenceLineChart);
     });
 
     viewElectoralBtn.addEventListener('click', () => {
