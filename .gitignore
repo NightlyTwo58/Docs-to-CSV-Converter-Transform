@@ -12,6 +12,10 @@ target/
 *.iml
 *.ipr
 
+tokens
+target
+credentials.json
+
 ### Eclipse ###
 .apt_generated
 .classpath

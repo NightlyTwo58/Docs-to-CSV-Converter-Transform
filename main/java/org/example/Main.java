@@ -10,10 +10,10 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) throws IOException, GeneralSecurityException {
         // domestic electoral parties
-        sort("1-NTDSDVCSGjNPBI7qaoI3ux2FpUMIMq3U7pvjYs9saA", "docs/output.csv");
+        sort("1-NTDSDVCSGjNPBI7qaoI3ux2FpUMIMq3U7pvjYs9saA", "public/output.csv");
 
         // parental influence
-        sortParental("1DJNfTQZuCNol0OyO6KyeQJWuHudkqCwVYkSKgVBF8Sc", "docs/outputPar.csv");
+        sortParental("1DJNfTQZuCNol0OyO6KyeQJWuHudkqCwVYkSKgVBF8Sc", "public/outputPar.csv");
     }
 
     public static void sort(String documentId, String outputId) throws IOException, GeneralSecurityException {

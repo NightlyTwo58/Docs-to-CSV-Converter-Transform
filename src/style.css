@@ -1,0 +1,156 @@
+/* General page styling */
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding-top: 60px;
+}
+
+/* Main header (menu / nav) */
+#mainHeader {
+  width: 100%;
+  height: 50px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  display: none;
+}
+#mainHeader button {
+  padding: 8px 15px;
+  font-size: 0.9em;
+  cursor: pointer;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+#mainHeader button:hover {
+  background-color: #5a6268;
+}
+
+/* Selection screen (menu) */
+#selectionScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: white;
+  z-index: 1000;
+}
+#selectionScreen h1 {
+  margin-bottom: 30px;
+}
+#selectionScreen button {
+  padding: 15px 30px;
+  margin: 10px;
+  font-size: 1.2em;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+#selectionScreen button:hover {
+  background-color: #0056b3;
+}
+
+/* DataPage component styling */
+.dataPage {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Slider section */
+.sliderSection {
+  margin: 20px 0;
+  text-align: center;
+}
+.sliderSection label {
+  font-weight: bold;
+  margin-right: 10px;
+}
+.sliderSection input[type="range"] {
+  width: 70%;
+  margin: 0 10px;
+  vertical-align: middle;
+}
+.sliderSection span {
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+/* Pie chart section */
+.pieSection {
+  margin: 30px 0;
+  width: 80%;
+  max-width: 800px;
+}
+.pieSection h2 {
+  text-align: center;
+}
+
+/* Line chart section */
+.lineSection {
+  margin: 30px 0;
+  width: 90%;
+}
+.lineSection h2 {
+  text-align: center;
+}
+.explanations p {
+  font-size: 0.95em;
+  margin-top: 8px;
+}
+
+/* CSV table section */
+.csvSection {
+  width: 100%;
+  margin: 30px 0;
+}
+.csvSection table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.csvSection th,
+.csvSection td {
+  border: 1px solid #aaa;
+  padding: 8px;
+  text-align: left;
+}
+.csvSection th {
+  background-color: #eee;
+}
+
+/* Charts */
+canvas {
+  max-width: 100%;
+  margin-top: 20px;
+  height: auto;
+}
+
+/* Show main header if a page is active */
+.show-mainHeader #mainHeader {
+  display: flex;
+}
