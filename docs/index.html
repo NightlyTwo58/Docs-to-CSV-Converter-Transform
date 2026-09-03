@@ -305,6 +305,53 @@
             .panel-header, .table-tools { align-items: flex-start; flex-direction: column; }
             th, td { padding: 8px; }
         }
+
+        /* ── Party card spectrum bars ───────────────────────────────── */
+        .party-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spectrum-block {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .spectrum-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--ink);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .spectrum-axis-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+
+        .spectrum-track {
+            position: relative;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--line);
+            margin: 2px 0 0;
+        }
+
+        .spectrum-dot {
+            position: absolute;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--ink);
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--ink);
+        }
     </style>
 </head>
 <body>
@@ -366,6 +413,18 @@
                         <p class="panel-subtitle">Each point shows the party with the highest support on that date.</p>
                     </div>
                 </div>
+                <div class="controls">
+                    <div class="control-row">
+                        <label for="winnerStartSlider">Start</label>
+                        <input type="range" id="winnerStartSlider" min="0" value="0" />
+                        <span class="date-readout" id="winnerStartReadout"></span>
+                    </div>
+                    <div class="control-row">
+                        <label for="winnerEndSlider">End</label>
+                        <input type="range" id="winnerEndSlider" min="0" value="0" />
+                        <span class="date-readout" id="winnerEndReadout"></span>
+                    </div>
+                </div>
                 <div class="chart-wrap compact"><canvas id="winnerChart"></canvas></div>
             </section>
 
@@ -382,8 +441,7 @@
             <section class="panel panel-full">
                 <div class="panel-header">
                     <div>
-                        <h2 class="panel-title">Party Notes</h2>
-                        <p class="panel-subtitle">Descriptions are attached to the same party codes used by the CSV.</p>
+                        <h2 class="panel-title">Party Descriptions</h2>
                     </div>
                 </div>
                 <div class="legend-grid" id="partyNotes"></div>

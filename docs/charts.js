@@ -1,13 +1,25 @@
 ﻿const partyExplanations = {
-    SA: '(Socialist Alliance) (Academically Far-Left, Socially Left) A historical socialist/communist party that inspired the RLP. It declined after proving too idealistic, but still resurges when RLP policies get old.',
-    MCP: '(Moderate-Centre Party) (Academically Left, Socially Left) The broad left/centrist party and the main advocate for rest and indirect measures to promote academic performance.',
-    LEP: '(Liberty-Equality Party) (Academically Left, Socially Right) Formerly dominant and socially liberal, the modern LEP is socially conservative while retaining left-wing academic policy instincts.',
-    MU: '(Musical Union) (Nonpartisan) Represents domestic piano/composing interests and works with any party willing to protect music in the budget.',
-    AU: '(Academic Union) (Academically Center-Right, Socially Right) A purist academic alternative to the RLP that has resurged as the conservative field widened.',
-    NAP: '(Nationalist Alliance Party) (Academically Far-Right, Socially Far-Right) A historical far-right party from early unstable stages of Richardian democracy.',
-    RLP: '(Reform Labour Party) (Academically Right, Socially Center-Right) The long-dominant academic party, built around grit, optimism, planning, and light conservative social views.',
-    CDoP: '(Crown Dominion Party) (Academically Far-Right, Socially Right) Represents parental influence and support in the Richardian republic, typically acting as an academically and socially conservative force.',
-    YPP: '(Youth Power Party) (Academically Left, Socially Left) The energetic youth and liberal-academic party, focused on friendships, love, and responsible light academics.'
+    SA: 'A historical socialist/communist party that inspired the RLP. It declined after proving too idealistic, but still resurges when RLP policies get old.',
+    MCP: 'The broad centre-left party advocating for moderating work, expanding extracurriculars, and increasing rest to promote academic performance.',
+    LEP: 'Formerly dominant and socially liberal, the modern LEP is now socially conservative and advocates for laissez-faire academic policy.',
+    MU: 'Represents domestic piano/composing interests and works with any party willing to protect music in the budget.',
+    AU: 'A academic purist alternative to the RLP.',
+    NAP: 'A right-wing populist party that supports unilateral action, redefining interaction around Richard-centrism, and opposes altruism.',
+    RLP: 'The long-dominant big-tent academic party, built around grit, optimism, planning, and light conservative social views.',
+    CDoP: 'Represents parental influence in the Richardian republic, acting as an counterweight to any liberal developments.',
+    YPP: 'The youth and liberal party, focused on friendships, love, and responsible optimistic academics. Nicknamed the happiness party.',
+};
+
+const partyPositions = {
+    SA:   { academic: 5,  social: 25 },
+    MCP:  { academic: 25, social: 25 },
+    LEP:  { academic: 25, social: 75 },
+    MU:   { academic: 50, social: 50 },
+    AU:   { academic: 75, social: 75 },
+    NAP:  { academic: 95, social: 95 },
+    RLP:  { academic: 75, social: 60 },
+    CDoP: { academic: 95, social: 75 },
+    YPP:  { academic: 25, social: 5 }
 };
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -49,7 +61,7 @@ async function fetchElectoralData() {
         renderTable(rows, headers, parties);
         updatePieChart();
         updateLineChart();
-        renderWinnerChart(rows);
+        updateWinnerChart();
         renderLatestBarChart(rows, parties);
         setStatus(`${rows.length} records loaded`);
     } catch (error) {
@@ -101,7 +113,7 @@ function parseCsvDate(value) {
 
 function setupControls(rows) {
     const lastIndex = rows.length - 1;
-    const controls = ['startDateSlider', 'endDateSlider', 'pieDateSlider'].map(id => document.getElementById(id));
+    const controls = ['startDateSlider', 'endDateSlider', 'pieDateSlider', 'winnerStartSlider', 'winnerEndSlider'].map(id => document.getElementById(id));
 
     controls.forEach(control => {
         control.min = 0;
@@ -112,10 +124,13 @@ function setupControls(rows) {
     document.getElementById('startDateSlider').value = 0;
     document.getElementById('endDateSlider').value = lastIndex;
     document.getElementById('pieDateSlider').value = lastIndex;
+    document.getElementById('winnerEndSlider').value = lastIndex;
 
     document.getElementById('startDateSlider').addEventListener('input', updateLineChart);
     document.getElementById('endDateSlider').addEventListener('input', updateLineChart);
     document.getElementById('pieDateSlider').addEventListener('input', updatePieChart);
+    document.getElementById('winnerStartSlider').addEventListener('input', updateWinnerChart);
+    document.getElementById('winnerEndSlider').addEventListener('input', updateWinnerChart);
 }
 
 function renderMetrics(rows, parties) {
@@ -200,6 +215,9 @@ function updateLineChart() {
     }
 
     const filteredRows = rows.slice(startIndex, endIndex + 1);
+
+    renderMetrics(filteredRows, chartState.parties);
+
     document.getElementById('displayStartDate').textContent = rows[startIndex].dateLabel;
     document.getElementById('displayEndDate').textContent = rows[endIndex].dateLabel;
 
@@ -246,11 +264,21 @@ function updateLineChart() {
     });
 }
 
-function renderWinnerChart(rows) {
+function updateWinnerChart() {
+    const rows = chartState.rows;
+    if (!rows.length) return;
+
+    const start = Number(document.getElementById('winnerStartSlider').value) || 0;
+    const end = Number(document.getElementById('winnerEndSlider').value) || rows.length - 1;
+    const filtered = rows.slice(start, end + 1);
+
+    document.getElementById('winnerStartReadout').textContent = filtered[0].dateLabel;
+    document.getElementById('winnerEndReadout').textContent = filtered[filtered.length - 1].dateLabel;
+
     const labels = chartState.parties;
     const datasets = labels.map(party => ({
         label: party,
-        data: rows.map(row => ({ x: row.date, y: row.winner === party ? row.values[party] : null })),
+        data: filtered.map(row => ({ x: row.date, y: row.winner === party ? row.values[party] : null })),
         backgroundColor: getPartyColor(party),
         borderColor: getPartyColor(party),
         pointRadius: 3,
@@ -268,7 +296,7 @@ function renderWinnerChart(rows) {
                 tooltip: { callbacks: { label: context => `${context.dataset.label}: ${context.parsed.y}` } }
             },
             scales: {
-                x: { type: 'time', time: { unit: 'month', tooltipFormat: 'PP' }, grid: { color: '#edf2f7' } },
+                x: { type: 'time', time: { unit: chooseTimeUnit(filtered), tooltipFormat: 'PP' }, grid: { color: '#edf2f7' } },
                 y: { beginAtZero: true, suggestedMax: 100, title: { display: true, text: 'Winning support' }, grid: { color: '#edf2f7' } }
             }
         }
@@ -307,12 +335,37 @@ function renderLatestBarChart(rows, parties) {
 }
 
 function renderPartyNotes(parties) {
-    document.getElementById('partyNotes').innerHTML = parties.map(party => `
-        <article class="party-card">
-            <div class="party-line"><span class="swatch" style="background:${getPartyColor(party)}"></span>${escapeHtml(party)}</div>
-            <p class="party-desc">${escapeHtml(partyExplanations[party] || 'No description available.')}</p>
-        </article>
-    `).join('');
+    document.getElementById('partyNotes').innerHTML = parties.map(party => {
+        const pos = partyPositions[party] || { academic: 50, social: 50 };
+        const color = getPartyColor(party);
+        const desc = escapeHtml(partyExplanations[party] || 'No description available.');
+
+        const spectrumBar = (label, leftLabel, rightLabel, pct) => `
+            <div class="spectrum-block">
+                <div class="spectrum-label">${escapeHtml(label)}</div>
+                <div class="spectrum-axis-labels">
+                    <span>${escapeHtml(leftLabel)}</span>
+                    <span>${escapeHtml('Center')}</span>
+                    <span>${escapeHtml(rightLabel)}</span>
+                </div>
+                <div class="spectrum-track">
+                    <div class="spectrum-dot" style="left:${pct}%"></div>
+                </div>
+            </div>
+        `;
+
+        return `
+            <article class="party-card">
+                <div class="party-line">
+                    <span class="swatch" style="background:${color}"></span>
+                    <span>${escapeHtml(party)}</span>
+                </div>
+                ${spectrumBar('Academic Policy', 'Left', 'Right', pos.academic)}
+                ${spectrumBar('Social Policy', 'Left', 'Right', pos.social)}
+                <p class="party-desc">${desc}</p>
+            </article>
+        `;
+    }).join('');
 }
 
 function renderTable(rows, headers, parties) {
