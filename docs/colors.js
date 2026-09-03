@@ -1,11 +1,16 @@
-const customColors = [
-    '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-    '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe'
+﻿const customColors = [
+    '#d62839', '#2d6cdf', '#2fb344', '#f59f00', '#7b2cbf',
+    '#00a6a6', '#ef476f', '#8ac926', '#6c757d', '#ff7f11'
 ];
 
-let electoralPieChart = null;
-let electoralLineChart = null;
-
-let allElectoralDataRows = [];
-let electoralMinDateMs = 0;
-let electoralMaxDateMs = 0;
+const chartState = {
+    rows: [],
+    headers: [],
+    parties: [],
+    charts: {
+        pie: null,
+        line: null,
+        winners: null,
+        latestBar: null
+    }
+};
